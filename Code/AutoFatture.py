@@ -134,7 +134,7 @@ class MaFenetre(QtWidgets.QDialog):
             self.__champTexte.clear()
             return
 
-        insert_Fatture='''INSERT INTO Fatture(IVA, Date,NumCom )
+        insert_Fatture='''INSERT INTO FattureA(IVA, Date,NumCom )
                             VALUES(?,?,?)'''
         tuple=(I,D,N)
         cur.execute(insert_Fatture,tuple)
@@ -196,15 +196,26 @@ class MaFenetre(QtWidgets.QDialog):
 
         page1 = pdf.pages[0]
         # date
-        x = page1.extract_text().find('Data')
-        y = page1.extract_text().find('SEDE')
-        date = page1.extract_text()[x + 5: y]
-        sheet2.cell(max_r + 2, 2).value = date
+        dataa = page1.extract_text().find('Data')
+        sede = page1.extract_text().find('SEDE')
+        Date = page1.extract_text()[dataa + 5: sede]
+        sheet2.cell(max_r + 2, 2).value = Date
+
         # entreprise
-        z = page1.extract_text().find('DESTINATARIO')
-        t = page1.extract_text().find('Copia')
-        name = page1.extract_text()[z + 12: t]
+        dest = page1.extract_text().find('DESTINATARIO')
+        copia = page1.extract_text().find('Copia')
+        name = page1.extract_text()[dest + 12: copia]
         sheet2.cell(max_r + 2, 1).value = name
+
+        # IVA
+        IV = page1.extract_text().find('IVA')
+        CF = page1.extract_text().find('C.F')
+        IVA = page1.extract_text()[IV + 4: CF]
+
+        # NUM
+        Nume = page1.extract_text().find('Numero')
+        Data = page1.extract_text().find('Data')
+        NumCom = page1.extract_text()[Nume + 7: Data]
 
         # Produits
         max_r = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
@@ -222,7 +233,21 @@ class MaFenetre(QtWidgets.QDialog):
                         for k in range(len(Lines[i])):
                             sheet2.cell(row=max_r + i + 2, column=k + 2).value = Lines[i][k]
                             sheet3.cell(row=max_r + i + 1, column=k + 11).value = Lines[i][k]
-                            # print(c)
+
+        I = str(IVA)
+        D = str(Date)
+        N = str(NumCom)
+        if check(I, D, N):
+            self.labelMessage.setText("This bill has already been registered")
+            self.__champTexte.clear()
+            return
+
+        insert_Fatture = '''INSERT INTO FattureV(IVA, Date,NumCom )
+                                    VALUES(?,?,?)'''
+        tuple = (I, D, N)
+        cur.execute(insert_Fatture, tuple)
+        conn.commit()
+
         wb.save('Fatture.xlsx')
         wb.close()
         os.chdir(rep)
@@ -236,7 +261,7 @@ class MaFenetre(QtWidgets.QDialog):
 def check(IVA,Date, NumCom):
     tuple=(str(IVA),str(Date),str(NumCom))
     check="""SELECT IVA,Date, NumCom
-    FROM Fatture as F
+    FROM FattureV as F
     WHERE F.IVA= ? AND F.Date= ? AND F.NumCom = ?"""
     cur.execute(check,tuple)
     boo = ''
@@ -246,6 +271,8 @@ def check(IVA,Date, NumCom):
     if(boo!=''):
         return True
     return False
+
+
 
 
 
@@ -261,12 +288,18 @@ try:
     print(sqlite3.version)
 
     cur = conn.cursor()
-    table_factures = '''CREATE TABLE IF NOT EXISTS Fatture(
+    table_facturesA = '''CREATE TABLE IF NOT EXISTS FattureA(
                               IVA TEXT,
                               Date TEXT,
                               NumCom TEXT
                              )'''
-    cur.execute(table_factures)
+    cur.execute(table_facturesA)
+    table_facturesV = '''CREATE TABLE IF NOT EXISTS FattureV(
+                                  IVA TEXT,
+                                  Date TEXT,
+                                  NumCom TEXT
+                                 )'''
+    cur.execute(table_facturesV)
     table_fournisseurs = '''CREATE TABLE IF NOT EXISTS Fournisseurs(
                                 Nom TEXT,
                                 IVA INT

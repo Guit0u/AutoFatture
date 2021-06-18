@@ -5,13 +5,30 @@ from difflib import SequenceMatcher
 
 if __name__ == '__main__':
     # Nom de la société
-    path='../Fatture_Acquisto/Facture11.pdf'
+    path='../Fatture_Vendita/Fattura_13.PDF'
     pdf = pdfplumber.open(path)
     page1=pdf.pages[0]
-    Iden = page1.extract_tables()[0][0][0].find('IVA:')
-    Deno = page1.extract_tables()[0][0][0].find('Denominazione')
-    IVA = page1.extract_tables()[0][0][0][Iden+6:Deno]
-    if len(IVA)>=12:
-        IVA=IVA[1:13]
+    page1 = pdf.pages[0]
+    # date
+    x = page1.extract_text().find('Data')
+    y = page1.extract_text().find('SEDE')
+    date = page1.extract_text()[x + 5: y]
 
-    print(type(IVA))
+    # entreprise
+    z = page1.extract_text().find('DESTINATARIO')
+    t = page1.extract_text().find('Copia')
+    name = page1.extract_text()[z + 12: t]
+
+    #IVA
+    IV = page1.extract_text().find('IVA')
+    CF = page1.extract_text().find('C.F')
+    IVA = page1.extract_text()[o+4: v]
+
+    #NUM
+    Nume = page1.extract_text().find('Numero')
+    Data = page1.extract_text().find('Data')
+    NUM = page1.extract_text()[num + 7: p]
+
+    vii=page1.extract_text()
+
+    print(vi)

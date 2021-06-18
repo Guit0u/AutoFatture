@@ -88,6 +88,9 @@ class MaFenetre(QtWidgets.QDialog):
         # Date
         date = page1.extract_tables()[1][1][3]
         sheet1.cell(max_r + 2, 2).value = date
+        #numero de la commande
+        # Numero documento
+        numero = page1.extract_tables()[1][1][2]
 
         for page in pdf.pages:
             max_r = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
@@ -102,14 +105,18 @@ class MaFenetre(QtWidgets.QDialog):
                         # print(line)
                         # """x = table[1] #a ameliorer
                     for i in range(len(Lines)):
-                        # print(Lines[i])
-                        # s = line[i]
-                        # lis = s.split("\n")
                         for k in range(len(Lines[i])):
                             sheet1.cell(row=max_r + i + 2, column=k + 3).value = Lines[i][k]
                             sheet3.cell(row=max_r + i+1, column=k + 3).value = Lines[i][k]
-                        # if (s != ''):
-                        # print(s)
+        F=str(name)
+        D=str(date)
+        N=str(numero)
+        check(F,D,N)
+        insert_Fatture='''INSERT INTO Fatture(Fournisseur, Date,NumCom )
+                            VALUES(?,?,?)'''
+        tuple=(F,D,N)
+        cur.execute(insert_Fatture,tuple)
+        conn.commit()
 
         wb.save('Fatture.xlsx')
         wb.close()
@@ -194,20 +201,32 @@ class MaFenetre(QtWidgets.QDialog):
                             sheet2.cell(row=max_r + i + 2, column=k + 2).value = Lines[i][k]
                             sheet3.cell(row=max_r + i + 1, column=k + 11).value = Lines[i][k]
                             # print(c)
-
-        insert_clients = '''INSERT INTO Clients(ID,Nom,Age)
-                            VALUES('1','Marie',20),
-                                  ('2','James',22),
-                                  ('3','Eva',19)
-                         '''
-        cur.execute(insert_clients)
-        conn.commit()
         wb.save('Fatture.xlsx')
         wb.close()
         os.chdir(rep)
         print("success")
         self.labelMessage.setText("Success")
         self.__champTexte.clear()
+
+
+
+
+def check(NumCom,Date, Fournisseur):
+    b=(str(Date),)
+    print(b)
+    check="""SELECT Date, NumCom, Fournisseur
+    FROM Fatture as F
+    WHERE F.Date= ?"""
+    cur.execute(check,b)
+    boo = ''
+    for i in cur:
+        print(i)
+        boo=i
+    if(boo!=''):
+        print('rate')
+
+
+
 
 
 conn = None
@@ -221,9 +240,9 @@ try:
 
     cur = conn.cursor()
     table_factures = '''CREATE TABLE IF NOT EXISTS Fatture(
-                              Fournisseur INT,
+                              Fournisseur TEXT,
                               Date TEXT,
-                              NumCom INT
+                              NumCom TEXT
                              )'''
     cur.execute(table_factures)
     table_fournisseurs = '''CREATE TABLE IF NOT EXISTS Fournisseurs(
@@ -232,10 +251,8 @@ try:
                                 )'''
     cur.execute(table_fournisseurs)
 
-    test = '''SELECT * FROM clients ukjhgf
-    
-    '''
-    cur.execute(test)
+
+
     for row in cur:
         print(row)
     conn.commit()

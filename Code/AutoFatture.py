@@ -220,12 +220,25 @@ try:
     print(sqlite3.version)
 
     cur = conn.cursor()
-    Table_clients = '''CREATE TABLE IF NOT EXISTS Clients(
-                              ID INT,
-                              Nom TEXT,
-                              Age INT
+    table_factures = '''CREATE TABLE IF NOT EXISTS Fatture(
+                              Fournisseur INT,
+                              Date TEXT,
+                              NumCom INT
                              )'''
-    cur.execute(Table_clients)
+    cur.execute(table_factures)
+    table_fournisseurs = '''CREATE TABLE IF NOT EXISTS Fournisseurs(
+                                Nom TEXT,
+                                IVA INT
+                                )'''
+    cur.execute(table_fournisseurs)
+
+    test = '''SELECT * FROM clients ukjhgf
+    
+    '''
+    cur.execute(test)
+    for row in cur:
+        print(row)
+    conn.commit()
 
     app = QtWidgets.QApplication(sys.argv)
     dialog = MaFenetre()

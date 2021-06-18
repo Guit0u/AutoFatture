@@ -89,14 +89,14 @@ class MaFenetre(QtWidgets.QDialog):
         # IVA De la société
         Iden = page1.extract_tables()[0][0][0].find('IVA:')
         Deno = page1.extract_tables()[0][0][0].find('Denominazione')
-        IVA = page1.extract_tables()[0][0][0][IVA + 6:Deno]
+        IVA = page1.extract_tables()[0][0][0][Iden + 6:Deno]
         if len(IVA) >= 12:
             IVA = IVA[1:13]
         # Date de la commande
-        date = page1.extract_tables()[1][1][3]
-        sheet1.cell(max_r + 2, 2).value = date
+        Date = page1.extract_tables()[1][1][3]
+        sheet1.cell(max_r + 2, 2).value = Date
         # Numero de la commande
-        numero = page1.extract_tables()[1][1][2]
+        NumCom = page1.extract_tables()[1][1][2]
 
         for page in pdf.pages:
             max_r = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
@@ -114,17 +114,17 @@ class MaFenetre(QtWidgets.QDialog):
                         for k in range(len(Lines[i])):
                             sheet1.cell(row=max_r + i + 2, column=k + 3).value = Lines[i][k]
                             sheet3.cell(row=max_r + i+1, column=k + 3).value = Lines[i][k]
-        F=str(name)
-        D=str(date)
-        N=str(numero)
-        if check(F,D,N):
+        I=str(IVA)
+        D=str(Date)
+        N=str(NumCom)
+        if check(I,D,N):
             self.labelMessage.setText("This bill has already been registered")
             self.__champTexte.clear()
             return
 
-        insert_Fatture='''INSERT INTO Fatture(Fournisseur, Date,NumCom )
+        insert_Fatture='''INSERT INTO Fatture(IVA, Date,NumCom )
                             VALUES(?,?,?)'''
-        tuple=(F,D,N)
+        tuple=(I,D,N)
         cur.execute(insert_Fatture,tuple)
         conn.commit()
 
@@ -221,13 +221,12 @@ class MaFenetre(QtWidgets.QDialog):
 
 
 
-def check(Fournisseur,Date, NumCom):
-    b=(str(Date),str(NumCom),str(Fournisseur))
-    print(b)
-    check="""SELECT Date, NumCom, Fournisseur
+def check(IVA,Date, NumCom):
+    tuple=(str(IVA),str(Date),str(NumCom))
+    check="""SELECT IVA,Date, NumCom
     FROM Fatture as F
-    WHERE F.Date= ? AND F.NumCom = ? AND F.Fournisseur = ?"""
-    cur.execute(check,b)
+    WHERE F.IVA= ? AND F.Date= ? AND F.NumCom = ?"""
+    cur.execute(check,tuple)
     boo = ''
     for i in cur:
         print(i)
@@ -251,7 +250,7 @@ try:
 
     cur = conn.cursor()
     table_factures = '''CREATE TABLE IF NOT EXISTS Fatture(
-                              Fournisseur TEXT,
+                              IVA TEXT,
                               Date TEXT,
                               NumCom TEXT
                              )'''

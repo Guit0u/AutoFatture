@@ -10,6 +10,8 @@ if __name__ == '__main__':
     page1=pdf.pages[0]
     Iden = page1.extract_tables()[0][0][0].find('IVA:')
     Deno = page1.extract_tables()[0][0][0].find('Denominazione')
-    IVA = page1.extract_tables()[0][0][0][IVA+6:Deno]
+    IVA = page1.extract_tables()[0][0][0][Iden+6:Deno]
     if len(IVA)>=12:
         IVA=IVA[1:13]
+
+    print(type(IVA))

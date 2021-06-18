@@ -5,6 +5,8 @@ import sys
 from PySide2 import QtCore, QtGui, QtWidgets
 from pathlib import Path
 import os
+import sqlite3
+from sqlite3 import Error
 
 class MaFenetre(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -193,6 +195,13 @@ class MaFenetre(QtWidgets.QDialog):
                             sheet3.cell(row=max_r + i + 1, column=k + 11).value = Lines[i][k]
                             # print(c)
 
+        insert_clients = '''INSERT INTO Clients(ID,Nom,Age)
+                            VALUES('1','Marie',20),
+                                  ('2','James',22),
+                                  ('3','Eva',19)
+                         '''
+        cur.execute(insert_clients)
+        conn.commit()
         wb.save('Fatture.xlsx')
         wb.close()
         os.chdir(rep)
@@ -201,6 +210,29 @@ class MaFenetre(QtWidgets.QDialog):
         self.__champTexte.clear()
 
 
-app = QtWidgets.QApplication(sys.argv)
-dialog = MaFenetre()
-dialog.exec_()
+conn = None
+rep = os.getcwd()
+os.chdir(os.pardir)
+dbf = str(Path("DB/database.db").absolute())
+os.chdir(rep)
+try:
+    conn = sqlite3.connect(dbf)
+    print(sqlite3.version)
+
+    cur = conn.cursor()
+    Table_clients = '''CREATE TABLE IF NOT EXISTS Clients(
+                              ID INT,
+                              Nom TEXT,
+                              Age INT
+                             )'''
+    cur.execute(Table_clients)
+
+    app = QtWidgets.QApplication(sys.argv)
+    dialog = MaFenetre()
+    dialog.exec_()
+
+except Error as e:
+    print(e)
+finally:
+    if conn:
+       conn.close()

@@ -80,16 +80,22 @@ class MaFenetre(QtWidgets.QDialog):
         max_r = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
 
         page1 = pdf.pages[0]
+
         # Nom de la société
         Deno = page1.extract_tables()[0][0][0].find('Denominazione')
         Regime = page1.extract_tables()[0][0][0].find('Regime')
         name = page1.extract_tables()[0][0][0][Deno + 15:Regime]
         sheet1.cell(max_r + 2, 1).value = name
-        # Date
+        # IVA De la société
+        Iden = page1.extract_tables()[0][0][0].find('IVA:')
+        Deno = page1.extract_tables()[0][0][0].find('Denominazione')
+        IVA = page1.extract_tables()[0][0][0][IVA + 6:Deno]
+        if len(IVA) >= 12:
+            IVA = IVA[1:13]
+        # Date de la commande
         date = page1.extract_tables()[1][1][3]
         sheet1.cell(max_r + 2, 2).value = date
-        #numero de la commande
-        # Numero documento
+        # Numero de la commande
         numero = page1.extract_tables()[1][1][2]
 
         for page in pdf.pages:

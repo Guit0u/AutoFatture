@@ -85,7 +85,7 @@ class MaFenetre(QtWidgets.QDialog):
         Deno = page1.extract_tables()[0][0][0].find('Denominazione')
         Regime = page1.extract_tables()[0][0][0].find('Regime')
         name = page1.extract_tables()[0][0][0][Deno + 15:Regime]
-        sheet1.cell(max_r + 2, 1).value = name
+
         # IVA De la société
         Iden = page1.extract_tables()[0][0][0].find('IVA:')
         Deno = page1.extract_tables()[0][0][0].find('Denominazione')
@@ -94,7 +94,7 @@ class MaFenetre(QtWidgets.QDialog):
             IVA = IVA[1:13]
         # Date de la commande
         Date = page1.extract_tables()[1][1][3]
-        sheet1.cell(max_r + 2, 2).value = Date
+        
         # Numero de la commande
         NumCom = page1.extract_tables()[1][1][2]
 
@@ -109,6 +109,8 @@ class MaFenetre(QtWidgets.QDialog):
             os.chdir(rep)
             return
 
+        sheet1.cell(max_r + 2, 1).value = name
+        sheet1.cell(max_r + 2, 2).value = Date
 
         for page in pdf.pages:
             max_r = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
@@ -126,13 +128,6 @@ class MaFenetre(QtWidgets.QDialog):
                         for k in range(len(Lines[i])):
                             sheet1.cell(row=max_r + i + 2, column=k + 3).value = Lines[i][k]
                             sheet3.cell(row=max_r + i+1, column=k + 3).value = Lines[i][k]
-        I=str(IVA)
-        D=str(Date)
-        N=str(NumCom)
-        if check(I,D,N):
-            self.labelMessage.setText("This bill has already been registered")
-            self.__champTexte.clear()
-            return
 
         insert_Fatture='''INSERT INTO FattureA(IVA, Date,NumCom )
                             VALUES(?,?,?)'''
@@ -199,13 +194,12 @@ class MaFenetre(QtWidgets.QDialog):
         dataa = page1.extract_text().find('Data')
         sede = page1.extract_text().find('SEDE')
         Date = page1.extract_text()[dataa + 5: sede]
-        sheet2.cell(max_r + 2, 2).value = Date
+
 
         # entreprise
         dest = page1.extract_text().find('DESTINATARIO')
         copia = page1.extract_text().find('Copia')
         name = page1.extract_text()[dest + 12: copia]
-        sheet2.cell(max_r + 2, 1).value = name
 
         # IVA
         IV = page1.extract_text().find('IVA')
@@ -216,6 +210,18 @@ class MaFenetre(QtWidgets.QDialog):
         Nume = page1.extract_text().find('Numero')
         Data = page1.extract_text().find('Data')
         NumCom = page1.extract_text()[Nume + 7: Data]
+
+        I = str(IVA)
+        D = str(Date)
+        N = str(NumCom)
+        if check(I, D, N):
+            self.labelMessage.setText("This bill has already been registered")
+            self.__champTexte.clear()
+            return
+
+        sheet2.cell(max_r + 2, 2).value = Date
+        sheet2.cell(max_r + 2, 1).value = name
+
 
         # Produits
         max_r = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
@@ -234,13 +240,6 @@ class MaFenetre(QtWidgets.QDialog):
                             sheet2.cell(row=max_r + i + 2, column=k + 2).value = Lines[i][k]
                             sheet3.cell(row=max_r + i + 1, column=k + 11).value = Lines[i][k]
 
-        I = str(IVA)
-        D = str(Date)
-        N = str(NumCom)
-        if check(I, D, N):
-            self.labelMessage.setText("This bill has already been registered")
-            self.__champTexte.clear()
-            return
 
         insert_Fatture = '''INSERT INTO FattureV(IVA, Date,NumCom )
                                     VALUES(?,?,?)'''
@@ -310,6 +309,7 @@ try:
 
     for row in cur:
         print(row)
+
     conn.commit()
 
     app = QtWidgets.QApplication(sys.argv)

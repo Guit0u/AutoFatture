@@ -98,6 +98,18 @@ class MaFenetre(QtWidgets.QDialog):
         # Numero de la commande
         NumCom = page1.extract_tables()[1][1][2]
 
+        I=str(IVA)
+        D=str(Date)
+        N=str(NumCom)
+        if check(I,D,N):
+            self.labelMessage.setText("This bill has already been registered")
+            self.__champTexte.clear()
+            wb.save('Fatture.xlsx')
+            wb.close()
+            os.chdir(rep)
+            return
+
+
         for page in pdf.pages:
             max_r = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
 

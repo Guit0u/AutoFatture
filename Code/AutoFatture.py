@@ -92,6 +92,18 @@ class MaFenetre(QtWidgets.QDialog):
         # Numero documento
         numero = page1.extract_tables()[1][1][2]
 
+        F=str(name)
+        D=str(date)
+        N=str(numero)
+        if check(F,D,N):
+            self.labelMessage.setText("This bill has already been registered")
+            self.__champTexte.clear()
+            wb.save('Fatture.xlsx')
+            wb.close()
+            os.chdir(rep)
+            return
+
+
         for page in pdf.pages:
             max_r = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
 
@@ -108,13 +120,6 @@ class MaFenetre(QtWidgets.QDialog):
                         for k in range(len(Lines[i])):
                             sheet1.cell(row=max_r + i + 2, column=k + 3).value = Lines[i][k]
                             sheet3.cell(row=max_r + i+1, column=k + 3).value = Lines[i][k]
-        F=str(name)
-        D=str(date)
-        N=str(numero)
-        if check(F,D,N):
-            self.labelMessage.setText("This bill has already been registered")
-            self.__champTexte.clear()
-            return
 
         insert_Fatture='''INSERT INTO Fatture(Fournisseur, Date,NumCom )
                             VALUES(?,?,?)'''

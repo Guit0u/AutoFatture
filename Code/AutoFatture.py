@@ -117,7 +117,11 @@ class MaFenetre(QtWidgets.QDialog):
         F=str(name)
         D=str(date)
         N=str(numero)
-        check(F,D,N)
+        if check(F,D,N):
+            self.labelMessage.setText("This bill has already been registered")
+            self.__champTexte.clear()
+            return
+
         insert_Fatture='''INSERT INTO Fatture(Fournisseur, Date,NumCom )
                             VALUES(?,?,?)'''
         tuple=(F,D,N)
@@ -217,19 +221,20 @@ class MaFenetre(QtWidgets.QDialog):
 
 
 
-def check(NumCom,Date, Fournisseur):
-    b=(str(Date),)
+def check(Fournisseur,Date, NumCom):
+    b=(str(Date),str(NumCom),str(Fournisseur))
     print(b)
     check="""SELECT Date, NumCom, Fournisseur
     FROM Fatture as F
-    WHERE F.Date= ?"""
+    WHERE F.Date= ? AND F.NumCom = ? AND F.Fournisseur = ?"""
     cur.execute(check,b)
     boo = ''
     for i in cur:
         print(i)
         boo=i
     if(boo!=''):
-        print('rate')
+        return True
+    return False
 
 
 

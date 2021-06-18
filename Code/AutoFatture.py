@@ -49,6 +49,7 @@ class MaFenetre(QtWidgets.QDialog):
             sheet1 = wb['Acquista']
             sheet2 = wb['Vendita']
             sheet3 = wb['Inventario']
+            os.chdir(rep)
 
         except FileNotFoundError:  # Sinon, on le crée
             wb = Workbook()
@@ -101,13 +102,23 @@ class MaFenetre(QtWidgets.QDialog):
         I=str(IVA)
         D=str(Date)
         N=str(NumCom)
-        if check(I,D,N):
+
+        if checkA(I,D,N):
             self.labelMessage.setText("This bill has already been registered")
             self.__champTexte.clear()
+            print(I+D+N)
             wb.save('Fatture.xlsx')
             wb.close()
             os.chdir(rep)
             return
+
+        if checkFourn(I):
+            insert_fournisseur= '''INSERT INTO Fournisseurs(Nom,IVA)
+                                        VALUES(?,?)'''
+            tuple = (name, I)
+            cur.execute(insert_fournisseur, tuple)
+            print('nouveau client!')
+            conn.commit()
 
         sheet1.cell(max_r + 2, 1).value = name
         sheet1.cell(max_r + 2, 2).value = Date
@@ -137,7 +148,6 @@ class MaFenetre(QtWidgets.QDialog):
 
         wb.save('Fatture.xlsx')
         wb.close()
-        os.chdir(rep)
         print("success")
         self.labelMessage.setText("Success")
         self.__champTexte.clear()
@@ -159,6 +169,7 @@ class MaFenetre(QtWidgets.QDialog):
             sheet1 = wb['Acquista']
             sheet2 = wb['Vendita']
             sheet3 = wb['Inventario']
+            os.chdir(rep)
 
         except FileNotFoundError:  # Sinon, on le crée
             wb = Workbook()
@@ -214,11 +225,22 @@ class MaFenetre(QtWidgets.QDialog):
         I = str(IVA)
         D = str(Date)
         N = str(NumCom)
-        if check(I, D, N):
+        if checkB(I, D, N):
             self.labelMessage.setText("This bill has already been registered")
             self.__champTexte.clear()
+            print(I +D +N)
             return
 
+        if checkFourn(I):
+            insert_fournisseur = '''INSERT INTO Fournisseurs(Nom,IVA)
+                                        VALUES(?,?)'''
+            tuple = (name, I)
+            cur.execute(insert_fournisseur, tuple)
+            print('nouveau client!')
+            conn.commit()
+
+        sheet1.cell(max_r + 2, 1).value = name
+        sheet1.cell(max_r + 2, 2).value = Date
         sheet2.cell(max_r + 2, 2).value = Date
         sheet2.cell(max_r + 2, 1).value = name
 
@@ -249,7 +271,7 @@ class MaFenetre(QtWidgets.QDialog):
 
         wb.save('Fatture.xlsx')
         wb.close()
-        os.chdir(rep)
+
         print("success")
         self.labelMessage.setText("Success")
         self.__champTexte.clear()
@@ -257,21 +279,47 @@ class MaFenetre(QtWidgets.QDialog):
 
 
 
-def check(IVA,Date, NumCom):
+def checkA(IVA,Date,NumCom):
     tuple=(str(IVA),str(Date),str(NumCom))
     check="""SELECT IVA,Date, NumCom
-    FROM FattureV as F
-    WHERE F.IVA= ? AND F.Date= ? AND F.NumCom = ?"""
+    FROM FattureA as F
+    WHERE F.IVA = ? AND F.Date = ? AND F.NumCom = ?"""
     cur.execute(check,tuple)
     boo = ''
     for i in cur:
         print(i)
         boo=i
-    if(boo!=''):
+    if(boo==''):
+        return False
+    return True
+
+def checkB(IVA,Date, NumCom):
+    tuple=(str(IVA),str(Date),str(NumCom))
+    check="""SELECT IVA,Date, NumCom
+    FROM FattureV as F
+    WHERE F.IVA = ? AND F.Date = ? AND F.NumCom = ?"""
+    cur.execute(check,tuple)
+    boo = ''
+    for i in cur:
+        print(i)
+        boo=i
+    if(boo==''):
+        return False
+    return True
+
+
+def checkFourn(IVA):
+    tuple = (str(IVA),)
+    check = """SELECT IVA
+        FROM Fournisseurs as F
+        WHERE F.IVA= ?  """
+    cur.execute(check, tuple)
+    bool=''
+    for row in cur:
+        bool = row
+    if bool=='':
         return True
     return False
-
-
 
 
 
@@ -301,7 +349,7 @@ try:
     cur.execute(table_facturesV)
     table_fournisseurs = '''CREATE TABLE IF NOT EXISTS Fournisseurs(
                                 Nom TEXT,
-                                IVA INT
+                                IVA TEXT
                                 )'''
     cur.execute(table_fournisseurs)
 

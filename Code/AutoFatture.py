@@ -12,17 +12,30 @@ class MaFenetre(QtWidgets.QDialog):
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
 
+        #les boutons
+
         self.boutonAchat = QtWidgets.QPushButton("Acquisto")
         self.boutonVente = QtWidgets.QPushButton("Venti")
-        # Le champ de texte
+
+        self.boutonAddClient = QtWidgets.QPushButton("Add client")
+
+        # Les champs de texte
         self.__champTexte = QtWidgets.QLineEdit("")
         self.labelMessage = QtWidgets.QLabel("")
+
+        self.labelAdd = QtWidgets.QLabel("")
+        self.__champIva = QtWidgets.QLineEdit("IVA")
+        self.__champNom = QtWidgets.QLineEdit("Nom")
 
         layout = QtWidgets.QGridLayout()
         layout.addWidget(self.__champTexte, 1, 1)
         layout.addWidget(self.labelMessage, 2, 1)
         layout.addWidget(self.boutonAchat, 3, 2)
         layout.addWidget(self.boutonVente, 3, 0)
+        layout.addWidget(self.__champIva, 5, 0)
+        layout.addWidget(self.__champNom, 5, 2)
+        layout.addWidget(self.boutonAddClient,7,1)
+        layout.addWidget(self.labelAdd,6,1)
         self.setLayout(layout)
 
         icone = QtGui.QIcon()
@@ -31,6 +44,8 @@ class MaFenetre(QtWidgets.QDialog):
 
         self.boutonAchat.clicked.connect(self.genererAchat)
         self.boutonVente.clicked.connect(self.genererVente)
+        self.boutonAddClient.clicked.connect(self.AddClientBouton)
+
 
     def genererAchat(self):
         path = Path("../Fatture_Acquisto/" + self.__champTexte.text() + ".pdf")
@@ -277,6 +292,28 @@ class MaFenetre(QtWidgets.QDialog):
         self.labelMessage.setText("Success")
         self.__champTexte.clear()
 
+    def AddClientBouton(self):
+        IVA = self.__champIva.text()
+        Nom = self.__champNom.text()
+        if len(IVA) > 11:
+            print("IVA too long")
+            self.labelAdd.setText("IVA too long")
+            self.__champIva.clear()
+            return
+        elif len(IVA) < 11:
+            self.labelAdd.setText("IVA too short")
+            self.__champIva.clear()
+            return
+        else:
+
+           if addClient(IVA,Nom):
+               self.labelAdd.setText("client succesfully added")
+           else:
+               self.labelAdd.setText("client already exists")
+
+           self.__champIva.clear()
+           self.__champNom.clear()
+
 
 
 
@@ -322,9 +359,20 @@ def checkFourn(IVA):
         return True
     return False
 
+def addClient(IVA,Nom):
+    if(checkFourn(IVA)):
+        tuple = (str(IVA),str(Nom))
+        requestAdd = """INSERT INTO Fournisseurs(IVA,Nom)
+                            VALUES(?,?)"""
+        cur.execute(requestAdd,tuple)
+        conn.commit()
+        return True
+    else:
+        print("Deja client")
+        return False
 
-
-
+def SuppClient(IVA):
+    pass
 
 conn = None
 rep = os.getcwd()

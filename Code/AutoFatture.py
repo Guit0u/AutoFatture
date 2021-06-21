@@ -85,14 +85,15 @@ class MaFenetre(QtWidgets.QDialog):
         # Nom de la société
         Deno = page1.extract_tables()[0][0][0].find('Denominazione')
         Regime = page1.extract_tables()[0][0][0].find('Regime')
-        name = page1.extract_tables()[0][0][0][Deno + 15:Regime]
+        name = page1.extract_tables()[0][0][0][Deno + 15:Regime-1]
 
         # IVA De la société
         Iden = page1.extract_tables()[0][0][0].find('IVA:')
         Deno = page1.extract_tables()[0][0][0].find('Denominazione')
-        IVA = page1.extract_tables()[0][0][0][Iden + 6:Deno]
+        IVA = page1.extract_tables()[0][0][0][Iden + 6:Deno-1]
         if len(IVA) >= 12:
             IVA = IVA[1:13]
+        IVA=IVA.split('\n')[0]
         # Date de la commande
         Date = page1.extract_tables()[1][1][3]
         
@@ -204,23 +205,23 @@ class MaFenetre(QtWidgets.QDialog):
         # date
         dataa = page1.extract_text().find('Data')
         sede = page1.extract_text().find('SEDE')
-        Date = page1.extract_text()[dataa + 5: sede]
+        Date = page1.extract_text()[dataa + 5: sede-1]
 
 
         # entreprise
         dest = page1.extract_text().find('DESTINATARIO')
         copia = page1.extract_text().find('Copia')
-        name = page1.extract_text()[dest + 12: copia]
+        name = page1.extract_text()[dest + 13: copia-1]
 
         # IVA
         IV = page1.extract_text().find('IVA')
         CF = page1.extract_text().find('C.F')
-        IVA = page1.extract_text()[IV + 4: CF]
+        IVA = page1.extract_text()[IV + 4: CF-1]
 
         # NUM
         Nume = page1.extract_text().find('Numero')
         Data = page1.extract_text().find('Data')
-        NumCom = page1.extract_text()[Nume + 7: Data]
+        NumCom = page1.extract_text()[Nume + 7: Data-1]
 
         I = str(IVA)
         D = str(Date)

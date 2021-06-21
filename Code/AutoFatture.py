@@ -152,9 +152,39 @@ class MaFenetre(QtWidgets.QDialog):
                         # print(line)
                         # """x = table[1] #a ameliorer
                     for i in range(len(Lines)):
+                        code = Lines[i][0]
+                        desc = Lines[i][1]
+                        quant = Lines[i][2]
                         for k in range(len(Lines[i])):
                             sheet1.cell(row=max_r + i + 2, column=k + 3).value = Lines[i][k]
                             sheet3.cell(row=max_r + i+1, column=k + 3).value = Lines[i][k]
+
+                        if checkObjet(code):
+                            insert_objet = '''INSERT INTO Inventaire(Code,Descrizione,Quantita)
+                                            VALUES(?,?,?)'''
+                            tuple_o = (code,desc,quant)
+                            cur.execute(insert_objet,tuple_o)
+
+                        else:
+                            nb_objets_request = '''SELECT Quantita FROM Inventaire
+                                                    WHERE Code = ?'''
+                            tuple_q = (code,)
+                            cur.execute(nb_objets_request,tuple_q)
+                            rows = cur.fetchall()
+                            print(rows)
+                            for row in rows:
+                                quant_init = row[0]
+                                print(quant_init)
+
+                            quant_s = float(quant.strip().split(" ")[0].replace(',', '.'))
+                            quant_init_s = float(quant_init.strip().split(" ")[0].replace(',','.'))
+
+                            tuple_o = (str(quant_s+quant_init_s),code)
+                            update_objet = '''UPDATE Inventaire
+                                                SET Quantita = ?
+                                                WHERE Code = ?'''
+                            cur.execute(update_objet,tuple_o)
+
 
         insert_Fatture='''INSERT INTO FattureA(IVA, Date,NumCom )
                             VALUES(?,?,?)'''
@@ -374,6 +404,18 @@ def addClient(IVA,Nom):
 def SuppClient(IVA):
     pass
 
+def checkObjet(code):
+    tuple = (code,)
+    check = '''SELECT * FROM Inventaire as I
+                    WHERE I.Code = ?'''
+    cur.execute(check,tuple)
+    b=''
+    for row in cur:
+        b=row
+    if b=='':
+        return True
+    return False
+
 conn = None
 rep = os.getcwd()
 os.chdir(os.pardir)
@@ -401,8 +443,13 @@ try:
                                 IVA TEXT
                                 )'''
     cur.execute(table_fournisseurs)
+    table_inventaire = '''CREATE TABLE IF NOT EXISTS Inventaire(
+                                Code TEXT,
+                                Descrizione TEXT,
+                                Quantita TEXT
+                                )'''
 
-
+    cur.execute(table_inventaire)
 
     for row in cur:
         print(row)

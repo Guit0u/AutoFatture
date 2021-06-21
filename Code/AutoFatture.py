@@ -144,46 +144,44 @@ class MaFenetre(QtWidgets.QDialog):
 
             # Produits
             Lines = []
-            x = page.extract_tables(table_settings={"horizontal_strategy": "text"})
-            for lines in x:
+            infos = page.extract_tables(table_settings={"horizontal_strategy": "text"})
+            for lines in infos:
                 for line in lines:
                     if (len(line) > 7) and line[2] != '' and line[2] != 'Quantità':
                         Lines.append(line)
-                        # print(line)
-                        # """x = table[1] #a ameliorer
-                    for i in range(len(Lines)):
-                        code = Lines[i][0]
-                        desc = Lines[i][1]
-                        quant = Lines[i][2]
-                        for k in range(len(Lines[i])):
-                            sheet1.cell(row=max_r + i + 2, column=k + 3).value = Lines[i][k]
-                            sheet3.cell(row=max_r + i+1, column=k + 3).value = Lines[i][k]
+            for i in range(len(Lines)):
+                code = Lines[i][0]
+                desc = Lines[i][1]
+                quant = Lines[i][2]
+                for k in range(len(Lines[i])):
+                    sheet1.cell(row=max_r + i + 2, column=k + 3).value = Lines[i][k]
+                    sheet3.cell(row=max_r + i+1, column=k + 3).value = Lines[i][k]
 
-                        if checkObjet(code):
-                            insert_objet = '''INSERT INTO Inventaire(Code,Descrizione,Quantita)
-                                            VALUES(?,?,?)'''
-                            tuple_o = (code,desc,quant)
-                            cur.execute(insert_objet,tuple_o)
+                if checkObjet(code):
+                    insert_objet = '''INSERT INTO Inventaire(Code,Descrizione,Quantita)
+                                    VALUES(?,?,?)'''
+                    tuple_o = (code,desc,quant)
+                    cur.execute(insert_objet,tuple_o)
 
-                        else:
-                            nb_objets_request = '''SELECT Quantita FROM Inventaire
-                                                    WHERE Code = ?'''
-                            tuple_q = (code,)
-                            cur.execute(nb_objets_request,tuple_q)
-                            rows = cur.fetchall()
-                            print(rows)
-                            for row in rows:
-                                quant_init = row[0]
-                                print(quant_init)
+                else:
+                    nb_objets_request = '''SELECT Quantita FROM Inventaire
+                                            WHERE Code = ?'''
+                    tuple_q = (code,)
+                    cur.execute(nb_objets_request,tuple_q)
+                    rows = cur.fetchall()
+                    print(rows)
+                    for row in rows:
+                        quant_init = row[0]
+                        print(quant_init)
 
-                            quant_s = float(quant.strip().split(" ")[0].replace(',', '.'))
-                            quant_init_s = float(quant_init.strip().split(" ")[0].replace(',','.'))
+                    quant_s = float(quant.strip().split(" ")[0].replace(',', '.'))
+                    quant_init_s = float(quant_init.strip().split(" ")[0].replace(',','.'))
 
-                            tuple_o = (str(quant_s+quant_init_s),code)
-                            update_objet = '''UPDATE Inventaire
-                                                SET Quantita = ?
-                                                WHERE Code = ?'''
-                            cur.execute(update_objet,tuple_o)
+                    tuple_o = (str(quant_s+quant_init_s),code)
+                    update_objet = '''UPDATE Inventaire
+                                        SET Quantita = ?
+                                        WHERE Code = ?'''
+                    cur.execute(update_objet,tuple_o)
 
 
         insert_Fatture='''INSERT INTO FattureA(IVA, Date,NumCom )
@@ -197,6 +195,9 @@ class MaFenetre(QtWidgets.QDialog):
         print("success")
         self.labelMessage.setText("Success")
         self.__champTexte.clear()
+
+
+    #TODO : accepter le fournisseur
 
     def genererVente(self):
         path = Path("../Fatture_Vendita/" + self.__champTexte.text() + ".pdf")
@@ -355,7 +356,7 @@ def checkA(IVA,Date,NumCom):
     cur.execute(check,tuple)
     boo = ''
     for i in cur:
-        print(i)
+        #print(i)
         boo=i
     if(boo==''):
         return False
@@ -369,7 +370,7 @@ def checkB(IVA,Date, NumCom):
     cur.execute(check,tuple)
     boo = ''
     for i in cur:
-        print(i)
+        #print(i)
         boo=i
     if(boo==''):
         return False
@@ -412,6 +413,7 @@ def checkObjet(code):
     b=''
     for row in cur:
         b=row
+        print(b)
     if b=='':
         return True
     return False

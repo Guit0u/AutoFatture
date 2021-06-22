@@ -57,6 +57,7 @@ class MaFenetre(QtWidgets.QDialog):
             print('file not found')
             self.__champTexte.clear()
             self.labelMessage.setText("This document doesn't exist")
+            os.chdir(rep)
             return
         try:  # Test si l'excel existe, dans ce cas là, on l'ouvre
             os.chdir(os.pardir)
@@ -183,7 +184,6 @@ class MaFenetre(QtWidgets.QDialog):
                                         WHERE Code = ?'''
                     cur.execute(update_objet,tuple_o)
 
-
         insert_Fatture='''INSERT INTO FattureA(IVA, Date,NumCom )
                             VALUES(?,?,?)'''
         tuple=(I,D,N)
@@ -195,7 +195,8 @@ class MaFenetre(QtWidgets.QDialog):
         print("success")
         self.labelMessage.setText("Success")
         self.__champTexte.clear()
-
+        print(os.getcwd())
+        os.chdir(rep)
 
     #TODO : accepter le fournisseur
 

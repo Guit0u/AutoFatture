@@ -371,10 +371,8 @@ class MaFenetre(QtWidgets.QMainWindow):
             print('nouveau client!')
             conn.commit()
 
-        sheet1.cell(max_r2 + 2, 1).value = name
-        sheet1.cell(max_r2 + 2, 2).value = Date
-        sheet2.cell(max_r2 + 2, 2).value = Date
         sheet2.cell(max_r2 + 2, 1).value = name
+        sheet2.cell(max_r2 + 2, 2).value = Date
 
         # Produits
         max_r2 = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
@@ -385,12 +383,9 @@ class MaFenetre(QtWidgets.QMainWindow):
                 for line in tables:
                     if not 'ALIQUOTE' in line[1]:
                         Lines.append(line)
-                    for i in range(len(Lines)):
-                        # print(Lines[i])
-                        # s = line[i]
-                        # lis = s.split("\n")
-                        for k in range(len(Lines[i])):
-                            sheet2.cell(row=max_r2 + i + 2, column=k + 2).value = Lines[i][k]
+        for i in range(len(Lines)):
+            for k in range(len(Lines[i])):
+                sheet2.cell(row=max_r2 + i + 2, column=k + 2).value = Lines[i][k]
 
         # rentre la facture
 

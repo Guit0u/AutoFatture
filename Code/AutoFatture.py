@@ -8,6 +8,7 @@ import os
 import sqlite3
 from sqlite3 import Error
 
+##Fenetre utilisateur
 class MaFenetre(QtWidgets.QDialog):
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
@@ -53,13 +54,15 @@ class MaFenetre(QtWidgets.QDialog):
         self.boutonVente.clicked.connect(self.genererVente)
         self.boutonAddClient.clicked.connect(self.AddClientBouton)
 
-
+    ##Fonction appelé par le bouton Acquisto
     def genererAchat(self):
+
         path = Path("../Fatture_Acquisto/" + self.__champTexte.text() + ".pdf")
         rep = os.getcwd()
+        #ouvre le pdf
         try:
             pdf = pdfplumber.open(path)
-
+        #cree le pdf
         except FileNotFoundError:
             print('file not found')
             self.__champTexte.clear()
@@ -73,8 +76,8 @@ class MaFenetre(QtWidgets.QDialog):
             sheet2 = wb['Vendita']
             sheet3 = wb['Inventario']
             os.chdir(rep)
-
-        except FileNotFoundError:  # Sinon, on le crée
+        # Sinon, on le crée
+        except FileNotFoundError:
             wb = Workbook()
             sheet = wb.active
             sheet.title = 'Acquista'
@@ -98,13 +101,13 @@ class MaFenetre(QtWidgets.QDialog):
             sheet2.cell(1, 7).value = 'IMPORTO U.'
             sheet2.cell(1, 8).value = 'IVA%SCONTO'
             sheet2.cell(1, 9).value = 'IMPORTO'
-            sheet3.cell(1, 3).value = 'Acquista'
-            sheet3.cell(1, 12).value = 'Vendita'
+            #sheet3.cell(1, 3).value = 'Acquista'
+            #sheet3.cell(1, 12).value = 'Vendita'
 
-        max_r = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
+        max_r1 = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel, dernière ligne remplie
 
         page1 = pdf.pages[0]
-
+        #Recherche des infos importantes
         # Nom de la société
         Deno = page1.extract_tables()[0][0][0].find('Denominazione')
         Regime = page1.extract_tables()[0][0][0].find('Regime')
@@ -127,28 +130,34 @@ class MaFenetre(QtWidgets.QDialog):
         D=str(Date)
         N=str(NumCom)
 
+        #On regarde si la facture a déjà été rentrée
         if checkA(I,D,N):
             self.labelMessage.setText("This bill has already been registered")
             self.__champTexte.clear()
-            print(I+D+N)
+            #print(I+D+N)
             wb.save('Fatture.xlsx')
             wb.close()
             os.chdir(rep)
-            return
+            return #stop
 
+        # On regarde si le fournisseur existe déjà
         if checkFourn(I):
             insert_fournisseur= '''INSERT INTO Fournisseurs(Nom,IVA)
                                         VALUES(?,?)'''
             tuple = (name, I)
             cur.execute(insert_fournisseur, tuple)
-            print('nouveau client!')
+            print('nouveau client!') #on le met dans la bdd
             conn.commit()
 
-        sheet1.cell(max_r + 2, 1).value = name
-        sheet1.cell(max_r + 2, 2).value = Date
+        # On ecrit les infos de la facture dans l'excel
+
+        sheet1.cell(max_r1 + 2, 1).value = name
+        sheet1.cell(max_r1 + 2, 2).value = Date
+
+        # On rentre les produits dans l'excel d'achat et dans la bdd inventaire
 
         for page in pdf.pages:
-            max_r = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
+            max_r1 = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel
 
             # Produits
             Lines = []
@@ -162,25 +171,29 @@ class MaFenetre(QtWidgets.QDialog):
                 desc = Lines[i][1]
                 quant = Lines[i][2]
                 for k in range(len(Lines[i])):
-                    sheet1.cell(row=max_r + i + 2, column=k + 3).value = Lines[i][k]
-                    sheet3.cell(row=max_r + i+1, column=k + 3).value = Lines[i][k]
+                    sheet1.cell(row=max_r1 + i + 2, column=k + 3).value = Lines[i][k]
+                    #sheet3.cell(row=max_r1 + i+1, column=k + 3).value = Lines[i][k]
 
+                # il n'existe pas dans la BDD, on le rentre
                 if checkObjet(code):
                     insert_objet = '''INSERT INTO Inventaire(Code,Descrizione,Quantita)
                                     VALUES(?,?,?)'''
                     tuple_o = (code,desc,quant)
                     cur.execute(insert_objet,tuple_o)
 
+
+                # Sinon on augmente sa quantité #a faire
                 else:
+
                     nb_objets_request = '''SELECT Quantita FROM Inventaire
                                             WHERE Code = ?'''
                     tuple_q = (code,)
                     cur.execute(nb_objets_request,tuple_q)
                     rows = cur.fetchall()
-                    print(rows)
+                    #print(rows)
                     for row in rows:
                         quant_init = row[0]
-                        print(quant_init)
+                        #print(quant_init)
 
                     quant_s = float(quant.strip().split(" ")[0].replace(',', '.'))
                     quant_init_s = float(quant_init.strip().split(" ")[0].replace(',','.'))
@@ -191,11 +204,26 @@ class MaFenetre(QtWidgets.QDialog):
                                         WHERE Code = ?'''
                     cur.execute(update_objet,tuple_o)
 
+        # On rentre la bdd inventaire dans la feuille 3
+
+        check = """SELECT *
+                FROM Inventaire as I"""
+        cur.execute(check)
+        pointeur = 1
+        for ligne in cur:
+            pointeur += 1
+            for o in range(0, len(ligne)):
+                sheet3.cell(row=pointeur, column=o + 2).value = ligne[o]
+
+        # On rentre la facture dans la bdd facture
+
         insert_Fatture='''INSERT INTO FattureA(IVA, Date,NumCom )
                             VALUES(?,?,?)'''
         tuple=(I,D,N)
         cur.execute(insert_Fatture,tuple)
         conn.commit()
+
+        #On close tout
 
         wb.save('Fatture.xlsx')
         wb.close()
@@ -205,11 +233,12 @@ class MaFenetre(QtWidgets.QDialog):
         print(os.getcwd())
         os.chdir(rep)
 
-    #TODO : accepter le fournisseur
 
+    ##Fonction appelée par le bouton vendita
     def genererVente(self):
         path = Path("../Fatture_Vendita/" + self.__champTexte.text() + ".pdf")
         rep = os.getcwd()
+        #ouvre le pdf
         try:
             pdf = pdfplumber.open(path)
 
@@ -218,7 +247,9 @@ class MaFenetre(QtWidgets.QDialog):
             self.__champTexte.clear()
             self.labelMessage.setText("This document doesn't exist")
             return
-        try:  # Test si l'excel existe, dans ce cas là, on l'ouvre
+        # Ouverture excel
+        # Test si l'excel existe, dans ce cas là, on l'ouvre
+        try:
             os.chdir(os.pardir)
             wb = openpyxl.load_workbook('Fatture.xlsx')
             sheet1 = wb['Acquista']
@@ -253,8 +284,9 @@ class MaFenetre(QtWidgets.QDialog):
             sheet3.cell(1, 3).value = 'Acquista'
             sheet3.cell(1, 12).value = 'Vendita'
 
-        max_r = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
+        max_r2 = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
 
+        #recherche des infos importantes
         page1 = pdf.pages[0]
         # date
         dataa = page1.extract_text().find('Data')
@@ -280,12 +312,13 @@ class MaFenetre(QtWidgets.QDialog):
         I = str(IVA)
         D = str(Date)
         N = str(NumCom)
-        if checkB(I, D, N):
+        #regarde si elle n'a pas déjà été rentrée
+        if checkV(I, D, N):
             self.labelMessage.setText("This bill has already been registered")
             self.__champTexte.clear()
-            print(I +D +N)
+            #print(I +D +N)
             return
-
+        # rentre le fournisseur
         if checkFourn(I):
             insert_fournisseur = '''INSERT INTO Fournisseurs(Nom,IVA)
                                         VALUES(?,?)'''
@@ -294,14 +327,14 @@ class MaFenetre(QtWidgets.QDialog):
             print('nouveau client!')
             conn.commit()
 
-        sheet1.cell(max_r + 2, 1).value = name
-        sheet1.cell(max_r + 2, 2).value = Date
-        sheet2.cell(max_r + 2, 2).value = Date
-        sheet2.cell(max_r + 2, 1).value = name
+        sheet1.cell(max_r2 + 2, 1).value = name
+        sheet1.cell(max_r2 + 2, 2).value = Date
+        sheet2.cell(max_r2+ 2, 2).value = Date
+        sheet2.cell(max_r2 + 2, 1).value = name
 
 
         # Produits
-        max_r = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
+        max_r2 = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
         Lines = []
         for page in pdf.pages:
             table = page.extract_tables(table_settings={"vertical_strategy": "text"})
@@ -314,23 +347,26 @@ class MaFenetre(QtWidgets.QDialog):
                         # s = line[i]
                         # lis = s.split("\n")
                         for k in range(len(Lines[i])):
-                            sheet2.cell(row=max_r + i + 2, column=k + 2).value = Lines[i][k]
-                            sheet3.cell(row=max_r + i + 1, column=k + 11).value = Lines[i][k]
+                            sheet2.cell(row=max_r2 + i + 2, column=k + 2).value = Lines[i][k]
 
+
+
+        # rentre la facture
 
         insert_Fatture = '''INSERT INTO FattureV(IVA, Date,NumCom )
                                     VALUES(?,?,?)'''
         tuple = (I, D, N)
         cur.execute(insert_Fatture, tuple)
         conn.commit()
-
+        #fermeture
         wb.save('Fatture.xlsx')
         wb.close()
-
         print("success")
         self.labelMessage.setText("Success")
         self.__champTexte.clear()
 
+
+    ## fonction appelé par le bouton add client
     def AddClientBouton(self):
         IVA = self.__champIva.text()
         Nom = self.__champNom.text()
@@ -355,7 +391,7 @@ class MaFenetre(QtWidgets.QDialog):
 
 
 
-
+## Verifie si la facture achat n'existe pas déjà dans la bdd
 def checkA(IVA,Date,NumCom):
     tuple=(str(IVA),str(Date),str(NumCom))
     check="""SELECT IVA,Date, NumCom
@@ -370,7 +406,8 @@ def checkA(IVA,Date,NumCom):
         return False
     return True
 
-def checkB(IVA,Date, NumCom):
+## Verifie si la facture vente n'existe pas déjà dans la bdd
+def checkV(IVA,Date, NumCom):
     tuple=(str(IVA),str(Date),str(NumCom))
     check="""SELECT IVA,Date, NumCom
     FROM FattureV as F
@@ -384,7 +421,7 @@ def checkB(IVA,Date, NumCom):
         return False
     return True
 
-
+## Regarde si le fournisseur existe déjà
 def checkFourn(IVA):
     tuple = (str(IVA),)
     check = """SELECT IVA
@@ -398,6 +435,7 @@ def checkFourn(IVA):
         return True
     return False
 
+## Ajoute le client à la main
 def addClient(IVA,Nom):
     if(checkFourn(IVA)):
         tuple = (str(IVA),str(Nom))
@@ -410,9 +448,11 @@ def addClient(IVA,Nom):
         print("Deja client")
         return False
 
+## Possiblement pour supprimer un client
 def SuppClient(IVA):
     pass
 
+# Est vrai si l'objet n'existe pas dans la BDD
 def checkObjet(code):
     tuple = (code,)
     check = '''SELECT * FROM Inventaire as I
@@ -421,16 +461,22 @@ def checkObjet(code):
     b=''
     for row in cur:
         b=row
-        print(b)
+        #print(b)
     if b=='':
         return True
     return False
 
+
+
+
+
+### Code principal
 conn = None
 rep = os.getcwd()
 os.chdir(os.pardir)
 dbf = str(Path("DB/database.db").absolute())
 os.chdir(rep)
+# cree la bdd
 try:
     conn = sqlite3.connect(dbf)
     print(sqlite3.version)
@@ -460,12 +506,8 @@ try:
                                 )'''
 
     cur.execute(table_inventaire)
-
-    for row in cur:
-        print(row)
-
     conn.commit()
-
+    #appel la classe fenetre
     app = QtWidgets.QApplication(sys.argv)
     dialog = MaFenetre()
     dialog.exec_()

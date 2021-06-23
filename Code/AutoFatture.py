@@ -44,7 +44,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.__champObjet = QtWidgets.QLineEdit("")
         self.__champObjet.setPlaceholderText("Nom")
         self.__champQuantite = QtWidgets.QLineEdit("")
-        self.__champQuantita.setPlaceholderText("Quantita")
+        self.__champQuantite.setPlaceholderText("Quantita")
         self.labelObjet = QtWidgets.QLabel("")
 
         layout1 = QtWidgets.QGridLayout()
@@ -72,7 +72,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         tabs.addTab(widget2, "Client")
 
         layout3 = QtWidgets.QGridLayout()
-        layout3.addWidget(self.boutonAddObjet, 2, 2)
+        layout3.addWidget(self.boutonAddObjet, 3, 2)
         layout3.addWidget(self.__champCode, 1, 1)
         layout3.addWidget(self.__champObjet, 1, 2)
         layout3.addWidget(self.__champQuantite, 1, 3)
@@ -529,6 +529,7 @@ def addClient(IVA, Nom):
 ## Ajoute un objet à la main
 def addObjet(Code,Objet,Quantite):
     if checkObjet(Code): #l'objet n'existe pas, on le rentre
+        print("on le rnetre")
         tuple=(str(Code), str(Objet),str(Quantite))
         request = """INSERT INTO Inventaire(Code, Descrizione, Quantita)
                         VALUES(?,?,?)"""
@@ -536,13 +537,18 @@ def addObjet(Code,Objet,Quantite):
         conn.commit()
         return True
     else: #l'objet existe déjà : calcul time
+        print("calculTime")
         tuple=(str(Code),)
         check = '''SELECT Quantita FROM Inventaire as I
                             WHERE I.Code = ?'''
         cur.execute(check, tuple)
         QInit=[line for line in cur][0][0]
         if type(QInit)==str:
-            QInitFloat = float(QInit.strip().split(" ")[0].replace(',','.'))
+            try:
+                QInitFloat = float(QInit.strip().split(" ")[0].replace(',','.'))
+            except(ValueError):
+                print("Quantité mauvaise")
+                return False
         else:
             QInitFloat=QInit
         if type(Quantite)==int or type(Quantite)==float:

@@ -23,9 +23,9 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.boutonAchat = QtWidgets.QPushButton("Acquisto")
         self.boutonVente = QtWidgets.QPushButton("Venti")
 
-        self.boutonAddClient = QtWidgets.QPushButton("Add client")
-        self.boutonAddObjet = QtWidgets.QPushButton("Add objet")
-        self.bouttonSuppClient = QtWidgets.QPushButton("Delete Client")
+        self.boutonAddClient = QtWidgets.QPushButton("aggiungi cliente")
+        self.boutonAddObjet = QtWidgets.QPushButton("Aggiungi articolo")
+        self.bouttonSuppClient = QtWidgets.QPushButton("eliminare un cliente")
 
         # Les champs de texte
         self.__champTexte = QtWidgets.QLineEdit("")
@@ -36,13 +36,13 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.__champIva = QtWidgets.QLineEdit("")
         self.__champIva.setPlaceholderText("P.IVA")
         self.__champNom = QtWidgets.QLineEdit("")
-        self.__champNom.setPlaceholderText("Company Name")
+        self.__champNom.setPlaceholderText("Nome della ditta")
 
 
         self.__champCode = QtWidgets.QLineEdit("")
         self.__champCode.setPlaceholderText("Code")
         self.__champObjet = QtWidgets.QLineEdit("")
-        self.__champObjet.setPlaceholderText("Nom")
+        self.__champObjet.setPlaceholderText("Desczione")
         self.__champQuantite = QtWidgets.QLineEdit("")
         self.__champQuantite.setPlaceholderText("Quantita")
         self.labelObjet = QtWidgets.QLabel("")
@@ -58,7 +58,7 @@ class MaFenetre(QtWidgets.QMainWindow):
 
         widget1 = QtWidgets.QWidget()
         widget1.setLayout(layout1)
-        tabs.addTab(widget1, "Facture")
+        tabs.addTab(widget1, "Inserire una fattura")
 
         layout2 = QtWidgets.QGridLayout()
 
@@ -69,7 +69,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         layout2.addWidget(self.bouttonSuppClient, 3, 2)
         widget2 = QtWidgets.QWidget()
         widget2.setLayout(layout2)
-        tabs.addTab(widget2, "Client")
+        tabs.addTab(widget2, "Gestire i clienti")
 
         layout3 = QtWidgets.QGridLayout()
         layout3.addWidget(self.boutonAddObjet, 3, 2)
@@ -79,7 +79,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         layout3.addWidget(self.labelObjet,2,2)
         widget3 = QtWidgets.QWidget()
         widget3.setLayout(layout3)
-        tabs.addTab(widget3,"Objet")
+        tabs.addTab(widget3,"Gestione degli oggetti")
 
         self.setCentralWidget(tabs)
         #disposition widget fenetre
@@ -110,9 +110,8 @@ class MaFenetre(QtWidgets.QMainWindow):
             pdf = pdfplumber.open(path)
         # cree le pdf
         except FileNotFoundError:
-            print('file not found')
             self.__champTexte.clear()
-            self.labelMessage.setText("This document doesn't exist")
+            self.labelMessage.setText("Questa fattura non esiste")
             os.chdir(rep)
             return
         try:  # Test si l'excel existe, dans ce cas là, on l'ouvre
@@ -177,9 +176,8 @@ class MaFenetre(QtWidgets.QMainWindow):
 
         # On regarde si la facture a déjà été rentrée
         if checkA(I, D, N):
-            self.labelMessage.setText("This bill has already been registered")
+            self.labelMessage.setText("Questa fattura è già stata registrata")
             self.__champTexte.clear()
-            # print(I+D+N)
             wb.save('Fatture.xlsx')
             wb.close()
             os.chdir(rep)
@@ -190,8 +188,7 @@ class MaFenetre(QtWidgets.QMainWindow):
             insert_fournisseur = '''INSERT INTO Fournisseurs(Nom,IVA)
                                         VALUES(?,?)'''
             tuple = (name, I)
-            cur.execute(insert_fournisseur, tuple)
-            print('nouveau client!')  # on le met dans la bdd
+            cur.execute(insert_fournisseur, tuple)# on le met dans la bdd
             conn.commit()
 
         # On ecrit les infos de la facture dans l'excel
@@ -215,9 +212,16 @@ class MaFenetre(QtWidgets.QMainWindow):
                 code = Lines[i][0]
                 desc = Lines[i][1]
                 quant = Lines[i][2]
+                if quant=='' or desc=='':
+                    break
+                if type(quant)==str:
+                    try:
+                        quant = float(quant.strip().split(" ")[0].replace(',', '.'))
+                    except(ValueError):
+                        return False
                 for k in range(len(Lines[i])):
                     sheet1.cell(row=max_r1 + i + 2, column=k + 3).value = Lines[i][k]
-                    # sheet3.cell(row=max_r1 + i+1, column=k + 3).value = Lines[i][k]
+
 
                 # il n'existe pas dans la BDD, on le rentre
                 if checkObjet(code):
@@ -235,15 +239,15 @@ class MaFenetre(QtWidgets.QMainWindow):
                     tuple_q = (code,)
                     cur.execute(nb_objets_request, tuple_q)
                     rows = cur.fetchall()
-                    # print(rows)
                     for row in rows:
                         quant_init = row[0]
-                        # print(quant_init)
 
-                    quant_s = float(quant.strip().split(" ")[0].replace(',', '.'))
-                    quant_init_s = float(quant_init.strip().split(" ")[0].replace(',', '.'))
+                    if type(quant)==str:
+                        quant = float(quant.strip().split(" ")[0].replace(',', '.'))
+                    if type(quant_init)==str:
+                        quant_init= float(quant_init.strip().split(" ")[0].replace(',', '.'))
 
-                    tuple_o = (str(quant_s + quant_init_s), code)
+                    tuple_o = (str(quant + quant_init), code)
                     update_objet = '''UPDATE Inventaire
                                         SET Quantita = ?
                                         WHERE Code = ?'''
@@ -272,10 +276,8 @@ class MaFenetre(QtWidgets.QMainWindow):
 
         wb.save('Fatture.xlsx')
         wb.close()
-        print("success")
-        self.labelMessage.setText("Success")
+        self.labelMessage.setText("La fattura è stata aggiunta")
         self.__champTexte.clear()
-        print(os.getcwd())
         os.chdir(rep)
 
     ##Fonction appelée par le bouton vendita
@@ -287,9 +289,8 @@ class MaFenetre(QtWidgets.QMainWindow):
             pdf = pdfplumber.open(path)
 
         except FileNotFoundError:
-            print('file not found')
             self.__champTexte.clear()
-            self.labelMessage.setText("This document doesn't exist")
+            self.labelMessage.setText("Questa fattura non esiste")
             return
         # Ouverture excel
         # Test si l'excel existe, dans ce cas là, on l'ouvre
@@ -358,9 +359,8 @@ class MaFenetre(QtWidgets.QMainWindow):
         N = str(NumCom)
         # regarde si elle n'a pas déjà été rentrée
         if checkV(I, D, N):
-            self.labelMessage.setText("This bill has already been registered")
+            self.labelMessage.setText("Questa fattura è già stata registrata")
             self.__champTexte.clear()
-            # print(I +D +N)
             return
         # rentre le fournisseur
         if checkFourn(I):
@@ -368,7 +368,6 @@ class MaFenetre(QtWidgets.QMainWindow):
                                         VALUES(?,?)'''
             tuple = (name, I)
             cur.execute(insert_fournisseur, tuple)
-            print('nouveau client!')
             conn.commit()
 
         sheet1.cell(max_r2 + 2, 1).value = name
@@ -386,9 +385,6 @@ class MaFenetre(QtWidgets.QMainWindow):
                     if not 'ALIQUOTE' in line[1]:
                         Lines.append(line)
                     for i in range(len(Lines)):
-                        # print(Lines[i])
-                        # s = line[i]
-                        # lis = s.split("\n")
                         for k in range(len(Lines[i])):
                             sheet2.cell(row=max_r2 + i + 2, column=k + 2).value = Lines[i][k]
 
@@ -402,8 +398,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         # fermeture
         wb.save('Fatture.xlsx')
         wb.close()
-        print("success")
-        self.labelMessage.setText("Success")
+        self.labelMessage.setText("La fattura è stata aggiunta")
         self.__champTexte.clear()
 
     ## fonction appelé par le bouton add client
@@ -411,20 +406,19 @@ class MaFenetre(QtWidgets.QMainWindow):
         IVA = self.__champIva.text()
         Nom = self.__champNom.text()
         if len(IVA) > 11:
-            print("IVA too long")
             self.labelAdd.setText("IVA too long")
             self.__champIva.clear()
             return
         elif len(IVA) < 11:
-            self.labelAdd.setText("IVA too short")
+            self.labelAdd.setText("IVA troppo corto")
             self.__champIva.clear()
             return
         else:
 
             if addClient(IVA, Nom):
-                self.labelAdd.setText("client succesfully added")
+                self.labelAdd.setText("Il cliente è stato aggiunto")
             else:
-                self.labelAdd.setText("client already exists")
+                self.labelAdd.setText("Il cliente esiste già")
 
             self.__champIva.clear()
             self.__champNom.clear()
@@ -432,8 +426,7 @@ class MaFenetre(QtWidgets.QMainWindow):
     def SuppClientBouton(self):
         IVA = self.__champIva.text()
         if len(IVA) > 11:
-            print("IVA too long")
-            self.labelAdd.setText("IVA too long")
+            self.labelAdd.setText("IVA troppo lunga")
             self.__champIva.clear()
             return
         elif len(IVA) < 11:
@@ -443,9 +436,9 @@ class MaFenetre(QtWidgets.QMainWindow):
         else:
 
             if SuppClient(IVA):
-                self.labelAdd.setText("client succesfully deleted")
+                self.labelAdd.setText("Il cliente è stato ritirato con successo")
             else:
-                self.labelAdd.setText("client doesn't exist")
+                self.labelAdd.setText("Il cliente non esiste")
 
             self.__champIva.clear()
             self.__champNom.clear()
@@ -456,9 +449,9 @@ class MaFenetre(QtWidgets.QMainWindow):
         Objet = self.__champObjet.text()
         Quantite = self.__champQuantite.text()
         if addObjet(Code,Objet,Quantite):
-                self.labelObjet.setText("objet succesfully added")
+                self.labelObjet.setText("Il prodotto è stato aggiunto")
         else:
-            self.labelObjet.setText("fail")
+            self.labelObjet.setText("Errore di quantità")
 
         self.__champCode.clear()
         self.__champObjet.clear()
@@ -475,7 +468,6 @@ def checkA(IVA, Date, NumCom):
     cur.execute(check, tuple)
     boo = ''
     for i in cur:
-        # print(i)
         boo = i
     if (boo == ''):
         return False
@@ -491,7 +483,6 @@ def checkV(IVA, Date, NumCom):
     cur.execute(check, tuple)
     boo = ''
     for i in cur:
-        # print(i)
         boo = i
     if (boo == ''):
         return False
@@ -523,13 +514,11 @@ def addClient(IVA, Nom):
         conn.commit()
         return True
     else:
-        print("Deja client")
         return False
 
 ## Ajoute un objet à la main
 def addObjet(Code,Objet,Quantite):
     if checkObjet(Code): #l'objet n'existe pas, on le rentre
-        print("on le rnetre")
         tuple=(str(Code), str(Objet),str(Quantite))
         request = """INSERT INTO Inventaire(Code, Descrizione, Quantita)
                         VALUES(?,?,?)"""
@@ -537,7 +526,6 @@ def addObjet(Code,Objet,Quantite):
         conn.commit()
         return True
     else: #l'objet existe déjà : calcul time
-        print("calculTime")
         tuple=(str(Code),)
         check = '''SELECT Quantita FROM Inventaire as I
                             WHERE I.Code = ?'''
@@ -547,7 +535,6 @@ def addObjet(Code,Objet,Quantite):
             try:
                 QInitFloat = float(QInit.strip().split(" ")[0].replace(',','.'))
             except(ValueError):
-                print("Quantité mauvaise")
                 return False
         else:
             QInitFloat=QInit
@@ -557,7 +544,6 @@ def addObjet(Code,Objet,Quantite):
             try:
                 Quantite= float(Quantite.strip().split(" ")[0].replace(',','.'))
             except(ValueError):
-                print('Quantite mauvaise')
                 return False
             QFinal = Quantite + QInitFloat
         check2="""UPDATE Inventaire 
@@ -596,7 +582,6 @@ def checkObjet(code):
     b=''
     for row in cur:
         b=row
-        #print(b)
     if b=='':
         return True
     return False
@@ -614,7 +599,6 @@ os.chdir(rep)
 # cree la bdd
 try:
     conn = sqlite3.connect(dbf)
-    print(sqlite3.version)
 
     cur = conn.cursor()
     table_facturesA = '''CREATE TABLE IF NOT EXISTS FattureA(

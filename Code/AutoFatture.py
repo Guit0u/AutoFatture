@@ -38,15 +38,22 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.__champNom = QtWidgets.QLineEdit("")
         self.__champNom.setPlaceholderText("Company Name")
 
+
+        self.__champCode = QtWidgets.QLineEdit("")
+        self.__champCode.setPlaceholderText("Code")
+        self.__champObjet = QtWidgets.QLineEdit("")
+        self.__champObjet.setPlaceholderText("Nom")
+        self.__champQuantite = QtWidgets.QLineEdit("")
+        self.__champQuantita.setPlaceholderText("Quantita")
+        self.labelObjet = QtWidgets.QLabel("")
+
         layout1 = QtWidgets.QGridLayout()
         layout1.addWidget(self.__champTexte, 1, 1)
         layout1.addWidget(self.labelMessage, 2, 1)
         layout1.addWidget(self.boutonAchat, 3, 2)
         layout1.addWidget(self.boutonVente, 3, 0)
 
-        self.__champCode = QtWidgets.QLineEdit("Code")
-        self.__champObjet = QtWidgets.QLineEdit("Nom")
-        self.__champQuantite = QtWidgets.QLineEdit("Quantita")
+
 
 
         widget1 = QtWidgets.QWidget()
@@ -65,10 +72,11 @@ class MaFenetre(QtWidgets.QMainWindow):
         tabs.addTab(widget2, "Client")
 
         layout3 = QtWidgets.QGridLayout()
-        layout3.addWidget(self.boutonAddObjet, 10, 2)
-        layout3.addWidget(self.__champCode, 11, 1)
-        layout3.addWidget(self.__champObjet, 11, 2)
-        layout3.addWidget(self.__champQuantite, 11, 3)
+        layout3.addWidget(self.boutonAddObjet, 2, 2)
+        layout3.addWidget(self.__champCode, 1, 1)
+        layout3.addWidget(self.__champObjet, 1, 2)
+        layout3.addWidget(self.__champQuantite, 1, 3)
+        layout3.addWidget(self.labelObjet,2,2)
         widget3 = QtWidgets.QWidget()
         widget3.setLayout(layout3)
         tabs.addTab(widget3,"Objet")
@@ -448,9 +456,9 @@ class MaFenetre(QtWidgets.QMainWindow):
         Objet = self.__champObjet.text()
         Quantite = self.__champQuantite.text()
         if addObjet(Code,Objet,Quantite):
-                self.labelAdd.setText("objet succesfully added")
+                self.labelObjet.setText("objet succesfully added")
         else:
-            self.labelAdd.setText("fail")
+            self.labelObjet.setText("fail")
 
         self.__champCode.clear()
         self.__champObjet.clear()
@@ -574,14 +582,17 @@ def checkObjet(code):
     tuple = (code,)
     check = '''SELECT * FROM Inventaire as I
                     WHERE I.Code = ?'''
-    cur.execute(check, tuple)
-    b = ''
+    cur.execute(check,tuple)
+    b=''
     for row in cur:
-        b = row
-        # print(b)
-    if b == '':
+        b=row
+        #print(b)
+    if b=='':
         return True
     return False
+
+
+
 
 
 ### Code principal
@@ -621,7 +632,7 @@ try:
 
     cur.execute(table_inventaire)
     conn.commit()
-    # appel la classe fenetre
+    #appel la classe fenetre
     app = QtWidgets.QApplication(sys.argv)
 
     window = MaFenetre()
@@ -633,4 +644,4 @@ except Error as e:
     print(e)
 finally:
     if conn:
-        conn.close()
+       conn.close()

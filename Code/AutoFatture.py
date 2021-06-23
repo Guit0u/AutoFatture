@@ -9,9 +9,13 @@ import sqlite3
 from sqlite3 import Error
 
 ##Fenetre utilisateur
-class MaFenetre(QtWidgets.QDialog):
+class MaFenetre(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
-        QtWidgets.QDialog.__init__(self, parent)
+        super().__init__()
+
+        tabs = QtWidgets.QTabWidget()
+        tabs.setTabPosition(QtWidgets.QTabWidget.North)
+        tabs.setMovable(False)
 
         #les boutons
 
@@ -22,33 +26,45 @@ class MaFenetre(QtWidgets.QDialog):
 
         # Les champs de texte
         self.__champTexte = QtWidgets.QLineEdit("")
+        self.__champTexte.setPlaceholderText("Fattura1")
         self.labelMessage = QtWidgets.QLabel("")
 
         self.labelAdd = QtWidgets.QLabel("")
-        self.__champIva = QtWidgets.QLineEdit("IVA")
-        self.__champNom = QtWidgets.QLineEdit("Nom")
+        self.__champIva = QtWidgets.QLineEdit("")
+        self.__champIva.setPlaceholderText("P.IVA")
+        self.__champNom = QtWidgets.QLineEdit("")
+        self.__champNom.setPlaceholderText("Company Name")
 
-        self.labelVide = QtWidgets.QLabel("")
-        self.labelVide2 = QtWidgets.QLabel("")
-        self.labelVide3 = QtWidgets.QLabel("")
+        layout1 = QtWidgets.QGridLayout()
+        layout1.addWidget(self.__champTexte, 1, 1)
+        layout1.addWidget(self.labelMessage, 2, 1)
+        layout1.addWidget(self.boutonAchat, 3, 2)
+        layout1.addWidget(self.boutonVente, 3, 0)
 
-        layout = QtWidgets.QGridLayout()
-        layout.addWidget(self.__champTexte, 1, 1)
-        layout.addWidget(self.labelMessage, 2, 1)
-        layout.addWidget(self.boutonAchat, 3, 2)
-        layout.addWidget(self.boutonVente, 3, 0)
-        layout.addWidget(self.labelVide, 4, 0)
-        layout.addWidget(self.labelVide2, 5, 0)
-        layout.addWidget(self.labelVide3, 6, 0)
-        layout.addWidget(self.__champIva, 7, 0)
-        layout.addWidget(self.__champNom, 7, 2)
-        layout.addWidget(self.boutonAddClient,9,1)
-        layout.addWidget(self.labelAdd,8,1)
-        self.setLayout(layout)
+        widget1 = QtWidgets.QWidget()
+        widget1.setLayout(layout1)
+        tabs.addTab(widget1,"Facture")
+
+        layout2 = QtWidgets.QGridLayout()
+
+        layout2.addWidget(self.__champIva, 1, 0)
+        layout2.addWidget(self.__champNom, 1, 2)
+        layout2.addWidget(self.boutonAddClient,3,1)
+        layout2.addWidget(self.labelAdd,2,1)
+
+        widget2 = QtWidgets.QWidget()
+        widget2.setLayout(layout2)
+        tabs.addTab(widget2,"Client")
+
+        self.setCentralWidget(tabs)
 
         icone = QtGui.QIcon()
-        icone.addPixmap(QtGui.QPixmap("bill.svg"))
+        rep = os.getcwd()
+        os.chdir(os.pardir)
+        icone.addPixmap(QtGui.QPixmap("resources/bill.svg"))
+        os.chdir(rep)
         self.setWindowIcon(icone)
+        self.setWindowTitle("AutoFatture")
 
         self.boutonAchat.clicked.connect(self.genererAchat)
         self.boutonVente.clicked.connect(self.genererVente)
@@ -509,8 +525,11 @@ try:
     conn.commit()
     #appel la classe fenetre
     app = QtWidgets.QApplication(sys.argv)
-    dialog = MaFenetre()
-    dialog.exec_()
+
+    window = MaFenetre()
+    window.show()
+
+    app.exec_()
 
 except Error as e:
     print(e)

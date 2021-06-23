@@ -23,6 +23,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.boutonVente = QtWidgets.QPushButton("Venti")
 
         self.boutonAddClient = QtWidgets.QPushButton("Add client")
+        self.bouttonSuppClient = QtWidgets.QPushButton("Delete Client")
 
         # Les champs de texte
         self.__champTexte = QtWidgets.QLineEdit("")
@@ -49,9 +50,9 @@ class MaFenetre(QtWidgets.QMainWindow):
 
         layout2.addWidget(self.__champIva, 1, 0)
         layout2.addWidget(self.__champNom, 1, 2)
-        layout2.addWidget(self.boutonAddClient,3,1)
+        layout2.addWidget(self.boutonAddClient,3,0)
         layout2.addWidget(self.labelAdd,2,1)
-
+        layout2.addWidget(self.bouttonSuppClient,3,2)
         widget2 = QtWidgets.QWidget()
         widget2.setLayout(layout2)
         tabs.addTab(widget2,"Client")
@@ -69,6 +70,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.boutonAchat.clicked.connect(self.genererAchat)
         self.boutonVente.clicked.connect(self.genererVente)
         self.boutonAddClient.clicked.connect(self.AddClientBouton)
+        self.bouttonSuppClient.clicked.connect(self.SuppClientBouton)
 
     ##Fonction appelé par le bouton Acquisto
     def genererAchat(self):
@@ -405,6 +407,26 @@ class MaFenetre(QtWidgets.QMainWindow):
            self.__champIva.clear()
            self.__champNom.clear()
 
+    def SuppClientBouton(self):
+        IVA = self.__champIva.text()
+        if len(IVA) > 11:
+            print("IVA too long")
+            self.labelAdd.setText("IVA too long")
+            self.__champIva.clear()
+            return
+        elif len(IVA) < 11:
+            self.labelAdd.setText("IVA too short")
+            self.__champIva.clear()
+            return
+        else:
+
+           if SuppClient(IVA):
+               self.labelAdd.setText("client succesfully deleted")
+           else:
+               self.labelAdd.setText("client doesn't exist")
+
+           self.__champIva.clear()
+           self.__champNom.clear()
 
 
 ## Verifie si la facture achat n'existe pas déjà dans la bdd
@@ -466,7 +488,17 @@ def addClient(IVA,Nom):
 
 ## Possiblement pour supprimer un client
 def SuppClient(IVA):
-    pass
+    if(checkFourn(IVA)):
+        return False
+    else:
+        tuple =(str(IVA),)
+        requestSupp = """DELETE FROM Fournisseurs
+                            WHERE IVA=?"""
+        cur.execute(requestSupp,tuple)
+        conn.commit()
+        return True4
+
+
 
 # Est vrai si l'objet n'existe pas dans la BDD
 def checkObjet(code):

@@ -361,6 +361,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         if checkV(I, D, N):
             self.labelMessage.setText("Questa fattura è già stata registrata")
             self.__champTexte.clear()
+            os.chdir(rep)
             return
         # rentre le fournisseur
         if checkFourn(I):
@@ -398,6 +399,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         wb.close()
         self.labelMessage.setText("La fattura è stata aggiunta")
         self.__champTexte.clear()
+        os.chdir(rep)
 
     ## fonction appelé par le bouton add client
     def AddClientBouton(self):

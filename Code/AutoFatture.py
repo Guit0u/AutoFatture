@@ -448,7 +448,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         Objet = self.__champObjet.text()
         Quantite = self.__champQuantite.text()
         if addObjet(Code,Objet,Quantite):
-                self.labelAdd.setText("objet succesfully added")
+            self.labelAdd.setText("objet succesfully added")
         else:
             self.labelAdd.setText("fail")
 
@@ -540,7 +540,11 @@ def addObjet(Code,Objet,Quantite):
         if type(Quantite)==int or type(Quantite)==float:
             QFinal = Quantite+QInitFloat
         else:
-            Quantite= float(Quantite.strip().split(" ")[0].replace(',','.'))
+            try:
+                Quantite= float(Quantite.strip().split(" ")[0].replace(',','.'))
+            except(ValueError):
+                print('Quantite mauvaise')
+                return False
             QFinal = Quantite + QInitFloat
         check2="""UPDATE Inventaire 
                     SET Quantita = ?

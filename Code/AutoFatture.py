@@ -24,6 +24,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.boutonVente = QtWidgets.QPushButton("Venti")
 
         self.boutonAddClient = QtWidgets.QPushButton("Add client")
+        self.boutonAddObjet = QtWidgets.QPushButton("Add objet")
         self.bouttonSuppClient = QtWidgets.QPushButton("Delete Client")
 
         # Les champs de texte
@@ -43,6 +44,11 @@ class MaFenetre(QtWidgets.QMainWindow):
         layout1.addWidget(self.boutonAchat, 3, 2)
         layout1.addWidget(self.boutonVente, 3, 0)
 
+        self.__champCode = QtWidgets.QLineEdit("Code")
+        self.__champObjet = QtWidgets.QLineEdit("Nom")
+        self.__champQuantite = QtWidgets.QLineEdit("Quantita")
+
+
         widget1 = QtWidgets.QWidget()
         widget1.setLayout(layout1)
         tabs.addTab(widget1, "Facture")
@@ -58,7 +64,19 @@ class MaFenetre(QtWidgets.QMainWindow):
         widget2.setLayout(layout2)
         tabs.addTab(widget2, "Client")
 
+        layout3 = QtWidgets.QGridLayout()
+        layout3.addWidget(self.boutonAddObjet, 10, 2)
+        layout3.addWidget(self.__champCode, 11, 1)
+        layout3.addWidget(self.__champObjet, 11, 2)
+        layout3.addWidget(self.__champQuantite, 11, 3)
+        widget3 = QtWidgets.QWidget()
+        widget3.setLayout(layout3)
+        tabs.addTab(widget3,"Objet")
+
         self.setCentralWidget(tabs)
+        #disposition widget fenetre
+
+
 
         icone = QtGui.QIcon()
         rep = os.getcwd()
@@ -71,6 +89,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.boutonAchat.clicked.connect(self.genererAchat)
         self.boutonVente.clicked.connect(self.genererVente)
         self.boutonAddClient.clicked.connect(self.AddClientBouton)
+        self.boutonAddObjet.clicked.connect(self.AddObjetBouton)
         self.bouttonSuppClient.clicked.connect(self.SuppClientBouton)
 
     ##Fonction appelé par le bouton Acquisto
@@ -120,8 +139,7 @@ class MaFenetre(QtWidgets.QMainWindow):
             sheet2.cell(1, 7).value = 'IMPORTO U.'
             sheet2.cell(1, 8).value = 'IVA%SCONTO'
             sheet2.cell(1, 9).value = 'IMPORTO'
-            # sheet3.cell(1, 3).value = 'Acquista'
-            # sheet3.cell(1, 12).value = 'Vendita'
+            sheet3.cell(1, 1).value = 'Inventario'
 
         max_r1 = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel, dernière ligne remplie
 
@@ -311,6 +329,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         sede = page1.extract_text().find('SEDE')
         Date = page1.extract_text()[dataa + 5: sede - 1]
 
+
         # entreprise
         dest = page1.extract_text().find('DESTINATARIO')
         copia = page1.extract_text().find('Copia')
@@ -423,6 +442,21 @@ class MaFenetre(QtWidgets.QMainWindow):
             self.__champIva.clear()
             self.__champNom.clear()
 
+    ## Ce que fais le bouton Add Objet
+    def AddObjetBouton(self):
+        Code = self.__champCode.text()
+        Objet = self.__champObjet.text()
+        Quantite = self.__champQuantite.text()
+        if addObjet(Code,Objet,Quantite):
+                self.labelAdd.setText("objet succesfully added")
+        else:
+            self.labelAdd.setText("fail")
+
+        self.__champCode.clear()
+        self.__champObjet.clear()
+        self.__champQuantite.clear()
+
+
 
 ## Verifie si la facture achat n'existe pas déjà dans la bdd
 def checkA(IVA, Date, NumCom):
@@ -484,6 +518,44 @@ def addClient(IVA, Nom):
         print("Deja client")
         return False
 
+## Ajoute un objet à la main
+def addObjet(Code,Objet,Quantite):
+    if checkObjet(Code): #l'objet n'existe pas, on le rentre
+        tuple=(str(Code), str(Objet),str(Quantite))
+        request = """INSERT INTO Inventaire(Code, Descrizione, Quantita)
+                        VALUES(?,?,?)"""
+        cur.execute(request, tuple)
+        conn.commit()
+        return True
+    else: #l'objet existe déjà : calcul time
+        tuple=(str(Code),)
+        check = '''SELECT Quantita FROM Inventaire as I
+                            WHERE I.Code = ?'''
+        cur.execute(check, tuple)
+        QInit=[line for line in cur][0][0]
+        if type(QInit)==str:
+            QInitFloat = float(QInit.strip().split(" ")[0].replace(',','.'))
+        else:
+            QInitFloat=QInit
+        if type(Quantite)==int or type(Quantite)==float:
+            QFinal = Quantite+QInitFloat
+        else:
+            Quantite= float(Quantite.strip().split(" ")[0].replace(',','.'))
+            QFinal = Quantite + QInitFloat
+        check2="""UPDATE Inventaire 
+                    SET Quantita = ?
+                    WHERE Code=?"""
+        tuple=(QFinal,str(Code))
+        cur.execute(check2, tuple)
+        conn.commit()
+        return True
+
+
+
+
+
+
+
 
 ## Possiblement pour supprimer un client
 def SuppClient(IVA):
@@ -497,8 +569,7 @@ def SuppClient(IVA):
         conn.commit()
         return True
 
-
-# Est vrai si l'objet n'existe pas dans la BDD
+## Est vrai si l'objet n'existe pas dans la BDD
 def checkObjet(code):
     tuple = (code,)
     check = '''SELECT * FROM Inventaire as I

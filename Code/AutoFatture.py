@@ -285,7 +285,6 @@ class MaFenetre(QtWidgets.QMainWindow):
 
     ##Fonction appelée par le bouton vendita
     def genererVente(self):
-        print('plip')
         path = Path("../Fatture_Vendita/" + self.__champTexte.text() + ".pdf")
         rep = os.getcwd()
         # ouvre le pdf
@@ -389,7 +388,6 @@ class MaFenetre(QtWidgets.QMainWindow):
                 for line in tables:
                     if not 'ALIQUOTE' in line[1]:
                         Lines.append(line)
-        print(Lines)
         for i in range(len(Lines)):
             code = Lines[i][1]
             desc = Lines[i][2]
@@ -409,23 +407,43 @@ class MaFenetre(QtWidgets.QMainWindow):
 
         # Si il n'existe pas dans la BDD, message d'avertissement puis rentre
         if checkObjet(code,desc,IVA):
-            #print(type(quantite))
             self.labelMessage.setText("Si prega di notare che uno degli articoli venduti non esiste nel database")#todo
             insert_objet='''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
                                     VALUES(?,?,?,?)'''
             tuple_o=(IVA,code,desc,quant)
             cur.execute(insert_objet, tuple_o)
-            conn.commit()
+        #Sinon, on change sa quantité
+        else:
 
+            nb_objets_request = '''SELECT Quantita FROM Inventaire
+                                                    WHERE Code = ? AND  IVA = ?'''
+            tuple_q = (code, IVA)
+            cur.execute(nb_objets_request, tuple_q)
+            rows = cur.fetchall()
+            for row in rows:
+                quant_init = row[0]
 
+            if type(quant) == str:
+                quant = float(quant.strip().split(" ")[0].replace(',', '.'))
+            if type(quant_init) == str:
+                quant_init = float(quant_init.strip().split(" ")[0].replace(',', '.'))
 
+            tuple_o = (str(quant + quant_init), code, IVA)
+            update_objet = '''UPDATE Inventaire
+                                                SET Quantita = ?
+                                                WHERE Code = ? AND IVA = ?'''
+            cur.execute(update_objet, tuple_o)
 
+        # On rentre la bdd inventaire dans la feuille 3
 
-
-
-
-
-
+        check = """SELECT *
+                    FROM Inventaire as I"""
+        cur.execute(check)
+        pointeur = 1
+        for ligne in cur:
+            pointeur += 1
+            for o in range(0, len(ligne)):
+                sheet3.cell(row=pointeur, column=o + 2).value = ligne[o]
 
         # rentre la facture
 
@@ -489,7 +507,6 @@ class MaFenetre(QtWidgets.QMainWindow):
         Objet = self.__champObjet.text()
         Quantite = self.__champQuantite.text()
         IVA = self.__champIIVA.text()
-        #print(Quantite,1)
         if len(IVA) > 11:
             self.labelObjet.setText("IVA troppo a lungo")
             return
@@ -497,11 +514,9 @@ class MaFenetre(QtWidgets.QMainWindow):
             self.labelObjet.setText("IVA troppo corto")
             return
         if addObjet(IVA,Code,Objet,Quantite):
-            print('woa')
             self.labelObjet.setText("Il prodotto è stato aggiunto")
         else:
             self.labelObjet.setText("Errore di quantità")
-            print('plop')
 
         self.__champCode.clear()
         self.__champObjet.clear()
@@ -570,13 +585,10 @@ def addClient(IVA, Nom):
 ## Ajoute un objet à la main
 def addObjet(IVA,Code,Objet,Quantite):
     if checkObjet(Code,Objet,IVA): #l'objet n'existe pas, on le rentre
-        print('plip')
-        print(Quantite)
         try:
             Quantite = float(Quantite.strip().split(" ")[0].replace(',', '.'))
 
         except(ValueError):
-            print('ploup')
             return False
         tuple=(IVA,str(Code), str(Objet),str(Quantite))
         request = """INSERT INTO Inventaire(IVA,Code, Descrizione, Quantita)

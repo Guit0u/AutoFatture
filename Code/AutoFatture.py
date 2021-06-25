@@ -285,12 +285,13 @@ class MaFenetre(QtWidgets.QMainWindow):
 
     ##Fonction appelée par le bouton vendita
     def genererVente(self):
+        print('plip')
         path = Path("../Fatture_Vendita/" + self.__champTexte.text() + ".pdf")
         rep = os.getcwd()
         # ouvre le pdf
         try:
             pdf = pdfplumber.open(path)
-
+        # cree le pdf
         except FileNotFoundError:
             self.__champTexte.clear()
             self.labelMessage.setText("Questa fattura non esiste")
@@ -388,9 +389,43 @@ class MaFenetre(QtWidgets.QMainWindow):
                 for line in tables:
                     if not 'ALIQUOTE' in line[1]:
                         Lines.append(line)
+        print(Lines)
         for i in range(len(Lines)):
+            code = Lines[i][1]
+            desc = Lines[i][2]
+            quant = Lines[i][4].split(' ')
+            quant=quant[-1]
+            if quant=='' or desc=='':
+                break
+            if type(quant)==str:
+                try:
+                    quant = float(quant.strip().split(" ")[0].replace(',', '.'))
+                    quant=-quant
+                except(ValueError):
+                    return False
             for k in range(len(Lines[i])):
                 sheet2.cell(row=max_r2 + i + 2, column=k + 2).value = Lines[i][k]
+
+
+        # Si il n'existe pas dans la BDD, message d'avertissement puis rentre
+        if checkObjet(code,desc,IVA):
+            #print(type(quantite))
+            self.labelMessage.setText("Si prega di notare che uno degli articoli venduti non esiste nel database")#todo
+            insert_objet='''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
+                                    VALUES(?,?,?,?)'''
+            tuple_o=(IVA,code,desc,quant)
+            cur.execute(insert_objet, tuple_o)
+            conn.commit()
+
+
+
+
+
+
+
+
+
+
 
         # rentre la facture
 
@@ -598,7 +633,7 @@ def SuppClient(IVA):
         return True
 
 ## Est vrai si l'objet n'existe pas dans la BDD
-def checkObjet(code,desc,IVA):
+def checkObjet(code,desc,IVA): #todo: verifier le or/and
     tuple = (code,desc,IVA)
     check = '''SELECT * FROM Inventaire as I
                     WHERE I.Code = ? OR I.Descrizione = ? AND I.IVA = ?'''

@@ -21,7 +21,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         # les boutons
 
         self.boutonAchat = QtWidgets.QPushButton("Acquisto")
-        self.boutonVente = QtWidgets.QPushButton("Venti")
+        self.boutonVente = QtWidgets.QPushButton("Vendita")
 
         self.boutonAddClient = QtWidgets.QPushButton("aggiungi cliente")
         self.boutonAddObjet = QtWidgets.QPushButton("Aggiungi articolo")

@@ -31,6 +31,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.__champTexte = QtWidgets.QLineEdit("")
         self.__champTexte.setPlaceholderText("Fattura1")
         self.labelMessage = QtWidgets.QLabel("")
+        self.labelWarning = QtWidgets.QLabel("")
 
         self.labelAdd = QtWidgets.QLabel("")
         self.__champIva = QtWidgets.QLineEdit("")
@@ -54,8 +55,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         layout1.addWidget(self.labelMessage, 2, 1)
         layout1.addWidget(self.boutonAchat, 3, 2)
         layout1.addWidget(self.boutonVente, 3, 0)
-
-
+        layout1.addWidget(self.labelWarning,3,1)
 
 
         widget1 = QtWidgets.QWidget()
@@ -410,7 +410,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         # Si il n'existe pas dans la BDD, message d'avertissement puis rentre
         if checkObjet(code,desc,IVA):
             #print(type(quantite))
-            self.labelMessage.setText("Si prega di notare che uno degli articoli venduti non esiste nel database")#todo
+            self.labelWarning.setText("Si prega di notare che uno degli articoli venduti non esiste nel database")
             insert_objet='''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
                                     VALUES(?,?,?,?)'''
             tuple_o=(IVA,code,desc,quant)

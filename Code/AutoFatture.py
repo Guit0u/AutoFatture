@@ -39,6 +39,8 @@ class MaFenetre(QtWidgets.QMainWindow):
         self.__champNom.setPlaceholderText("Nome della ditta")
 
 
+        self.__champIIVA = QtWidgets.QLineEdit("")
+        self.__champIIVA.setPlaceholderText("IVA del fornitore")
         self.__champCode = QtWidgets.QLineEdit("")
         self.__champCode.setPlaceholderText("Code")
         self.__champObjet = QtWidgets.QLineEdit("")
@@ -72,10 +74,11 @@ class MaFenetre(QtWidgets.QMainWindow):
         tabs.addTab(widget2, "Gestire i clienti")
 
         layout3 = QtWidgets.QGridLayout()
-        layout3.addWidget(self.boutonAddObjet, 3, 2)
-        layout3.addWidget(self.__champCode, 1, 1)
-        layout3.addWidget(self.__champObjet, 1, 2)
-        layout3.addWidget(self.__champQuantite, 1, 3)
+        layout3.addWidget(self.boutonAddObjet, 3, 2.5)
+        layout3.addWidget(self.__champIIVA, 1, 1)
+        layout3.addWidget(self.__champCode, 1, 2)
+        layout3.addWidget(self.__champObjet, 1, 3)
+        layout3.addWidget(self.__champQuantite, 1, 4)
         layout3.addWidget(self.labelObjet,2,2)
         widget3 = QtWidgets.QWidget()
         widget3.setLayout(layout3)
@@ -224,10 +227,10 @@ class MaFenetre(QtWidgets.QMainWindow):
 
 
                 # il n'existe pas dans la BDD, on le rentre
-                if checkObjet(code):
-                    insert_objet = '''INSERT INTO Inventaire(Code,Descrizione,Quantita)
-                                    VALUES(?,?,?)'''
-                    tuple_o = (code, desc, quant)
+                if checkObjet(code,desc,IVA):
+                    insert_objet = '''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
+                                    VALUES(?,?,?,?)'''
+                    tuple_o = (IVA,code, desc, quant)
                     cur.execute(insert_objet, tuple_o)
 
 
@@ -235,8 +238,8 @@ class MaFenetre(QtWidgets.QMainWindow):
                 else:
 
                     nb_objets_request = '''SELECT Quantita FROM Inventaire
-                                            WHERE Code = ?'''
-                    tuple_q = (code,)
+                                            WHERE Code = ? AND  IVA = ?'''
+                    tuple_q = (code, IVA)
                     cur.execute(nb_objets_request, tuple_q)
                     rows = cur.fetchall()
                     for row in rows:
@@ -247,10 +250,10 @@ class MaFenetre(QtWidgets.QMainWindow):
                     if type(quant_init)==str:
                         quant_init= float(quant_init.strip().split(" ")[0].replace(',', '.'))
 
-                    tuple_o = (str(quant + quant_init), code)
+                    tuple_o = (str(quant + quant_init), code, IVA)
                     update_objet = '''UPDATE Inventaire
                                         SET Quantita = ?
-                                        WHERE Code = ?'''
+                                        WHERE Code = ? AND IVA = ?'''
                     cur.execute(update_objet, tuple_o)
 
         # On rentre la bdd inventaire dans la feuille 3
@@ -358,12 +361,14 @@ class MaFenetre(QtWidgets.QMainWindow):
         D = str(Date)
         N = str(NumCom)
         # regarde si elle n'a pas déjà été rentrée
+
         if checkV(I, D, N):
             self.labelMessage.setText("Questa fattura è già stata registrata")
             self.__champTexte.clear()
             os.chdir(rep)
             return
         # rentre le fournisseur
+
         if checkFourn(I):
             insert_fournisseur = '''INSERT INTO Fournisseurs(Nom,IVA)
                                         VALUES(?,?)'''
@@ -406,7 +411,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         IVA = self.__champIva.text()
         Nom = self.__champNom.text()
         if len(IVA) > 11:
-            self.labelAdd.setText("IVA too long")
+            self.labelAdd.setText("IVA troppo a lungo")
             self.__champIva.clear()
             return
         elif len(IVA) < 11:
@@ -448,14 +453,25 @@ class MaFenetre(QtWidgets.QMainWindow):
         Code = self.__champCode.text()
         Objet = self.__champObjet.text()
         Quantite = self.__champQuantite.text()
-        if addObjet(Code,Objet,Quantite):
-                self.labelObjet.setText("Il prodotto è stato aggiunto")
+        IVA = self.__champIIVA.text()
+        #print(Quantite,1)
+        if len(IVA) > 11:
+            self.labelObjet.setText("IVA troppo a lungo")
+            return
+        elif len(IVA) < 11:
+            self.labelObjet.setText("IVA troppo corto")
+            return
+        if addObjet(IVA,Code,Objet,Quantite):
+            print('woa')
+            self.labelObjet.setText("Il prodotto è stato aggiunto")
         else:
             self.labelObjet.setText("Errore di quantità")
+            print('plop')
 
         self.__champCode.clear()
         self.__champObjet.clear()
         self.__champQuantite.clear()
+        self.__champIIVA.clear()
 
 
 
@@ -517,11 +533,19 @@ def addClient(IVA, Nom):
         return False
 
 ## Ajoute un objet à la main
-def addObjet(Code,Objet,Quantite):
-    if checkObjet(Code): #l'objet n'existe pas, on le rentre
-        tuple=(str(Code), str(Objet),str(Quantite))
-        request = """INSERT INTO Inventaire(Code, Descrizione, Quantita)
-                        VALUES(?,?,?)"""
+def addObjet(IVA,Code,Objet,Quantite):
+    if checkObjet(Code,Objet,IVA): #l'objet n'existe pas, on le rentre
+        print('plip')
+        print(Quantite)
+        try:
+            Quantite = float(Quantite.strip().split(" ")[0].replace(',', '.'))
+
+        except(ValueError):
+            print('ploup')
+            return False
+        tuple=(IVA,str(Code), str(Objet),str(Quantite))
+        request = """INSERT INTO Inventaire(IVA,Code, Descrizione, Quantita)
+                        VALUES(?,?,?,?)"""
         cur.execute(request, tuple)
         conn.commit()
         return True
@@ -548,8 +572,8 @@ def addObjet(Code,Objet,Quantite):
             QFinal = Quantite + QInitFloat
         check2="""UPDATE Inventaire 
                     SET Quantita = ?
-                    WHERE Code=?"""
-        tuple=(QFinal,str(Code))
+                    WHERE Code=? AND IVA=?"""
+        tuple=(QFinal,str(Code),IVA)
         cur.execute(check2, tuple)
         conn.commit()
         return True
@@ -574,10 +598,10 @@ def SuppClient(IVA):
         return True
 
 ## Est vrai si l'objet n'existe pas dans la BDD
-def checkObjet(code):
-    tuple = (code,)
+def checkObjet(code,desc,IVA):
+    tuple = (code,desc,IVA)
     check = '''SELECT * FROM Inventaire as I
-                    WHERE I.Code = ?'''
+                    WHERE I.Code = ? OR I.Descrizione = ? AND I.IVA = ?'''
     cur.execute(check,tuple)
     b=''
     for row in cur:
@@ -585,8 +609,6 @@ def checkObjet(code):
     if b=='':
         return True
     return False
-
-
 
 
 
@@ -619,6 +641,7 @@ try:
                                 )'''
     cur.execute(table_fournisseurs)
     table_inventaire = '''CREATE TABLE IF NOT EXISTS Inventaire(
+                                IVA TEXT,
                                 Code TEXT,
                                 Descrizione TEXT,
                                 Quantita TEXT

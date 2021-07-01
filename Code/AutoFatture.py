@@ -74,7 +74,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         tabs.addTab(widget2, "Gestire i clienti")
 
         layout3 = QtWidgets.QGridLayout()
-        layout3.addWidget(self.boutonAddObjet, 3, 2.5)
+        layout3.addWidget(self.boutonAddObjet, 3, 4)
         layout3.addWidget(self.__champIIVA, 1, 1)
         layout3.addWidget(self.__champCode, 1, 2)
         layout3.addWidget(self.__champObjet, 1, 3)
@@ -277,7 +277,6 @@ class MaFenetre(QtWidgets.QMainWindow):
 
 
 
-
         max_r2 = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
 
         # recherche des infos importantes
@@ -346,8 +345,31 @@ class MaFenetre(QtWidgets.QMainWindow):
         for i in range(len(Lines)):
             code = Lines[i][1]
             desc = Lines[i][2]
-            quant = Lines[i][4].split(' ')
-            quant=quant[-1]
+            tempBool = True
+            temp=2
+            while tempBool:
+                quant = Lines[i][temp].split(' ')
+                print(quant)
+                quant = quant[-1]
+                print('bonjour')
+                print(quant)
+                try:
+                    if(quant.find(',')==-1):
+                        temp+=1
+                    else:
+                        quant=float(quant.strip().split(" ")[0].replace(',', '.'))
+                        tempBool=False
+                except:
+                    print('except')
+                    temp+=1
+
+
+            print('quant0=')
+            print(quant)
+            print("code=")
+            print(code)
+            print("desc")
+            print(desc)
             if quant=='' or desc=='':
                 break
             if type(quant)==str:
@@ -613,10 +635,10 @@ def SuppClient(IVA):
         return True
 
 ## Est vrai si l'objet n'existe pas dans la BDD
-def checkObjet(code,desc,IVA): #todo: verifier le or/and
+def checkObjet(code,desc,IVA):
     tuple = (code,desc,IVA)
     check = '''SELECT * FROM Inventaire as I
-                    WHERE I.Code = ? OR I.Descrizione = ? AND I.IVA = ?'''
+                    WHERE (I.Code = ? OR I.Descrizione = ?) AND I.IVA = ?'''
     cur.execute(check,tuple)
     b=''
     for row in cur:

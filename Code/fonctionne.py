@@ -15,6 +15,7 @@ if __name__ == '__main__':
             sheet1 = wb['Acquista']
             sheet2=wb['Vendita']
             sheet3 = wb['Inventario']
+            sheet4 = wb['Fornitori']
 
         except FileNotFoundError: #Sinon, on le crée
             wb = Workbook()
@@ -22,9 +23,11 @@ if __name__ == '__main__':
             sheet.title = 'Acquista'
             wb.create_sheet('Vendita')
             wb.create_sheet('Inventario')
+            wb.create_sheet('Fornitori')
             sheet1 = wb['Acquista']
             sheet2 = wb['Vendita']
             sheet3= wb['Inventario']
+            sheet4 = wb['Fornitori']
 
             sheet1.cell(1, 3).value='Cod Articolo'
             sheet1.cell(1, 4).value = 'Desczione'
@@ -43,6 +46,7 @@ if __name__ == '__main__':
             sheet2.cell(1, 9).value = 'IMPORTO'
             sheet3.cell(1,3).value='Acquista'
             sheet3.cell(1,12).value='Vendita'
+            sheet4.cell(1, 1).value = 'Fornitori'
 
 
 

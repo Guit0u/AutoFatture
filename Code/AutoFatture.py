@@ -41,7 +41,7 @@ class MaFenetre(QtWidgets.QMainWindow):
 
 
         self.__champIIVA = QtWidgets.QLineEdit("")
-        self.__champIIVA.setPlaceholderText("IVA del fornitore")
+        self.__champIIVA.setPlaceholderText("IVA del fornitore/cliente")
         self.__champCode = QtWidgets.QLineEdit("")
         self.__champCode.setPlaceholderText("Code")
         self.__champObjet = QtWidgets.QLineEdit("")
@@ -117,39 +117,6 @@ class MaFenetre(QtWidgets.QMainWindow):
             self.labelMessage.setText("Questa fattura non esiste")
             os.chdir(rep)
             return
-        try:  # Test si l'excel existe, dans ce cas là, on l'ouvre
-            os.chdir(os.pardir)
-            wb = openpyxl.load_workbook('Fatture.xlsx')
-            sheet1 = wb['Acquista']
-            sheet2 = wb['Vendita']
-            sheet3 = wb['Inventario']
-            os.chdir(rep)
-        # Sinon, on le crée
-        except FileNotFoundError:
-            wb = Workbook()
-            sheet = wb.active
-            sheet.title = 'Acquista'
-            wb.create_sheet('Vendita')
-            wb.create_sheet('Inventario')
-            sheet1 = wb['Acquista']
-            sheet2 = wb['Vendita']
-            sheet3 = wb['Inventario']
-            sheet1.cell(1, 3).value = 'Cod Articolo'
-            sheet1.cell(1, 4).value = 'Desczione'
-            sheet1.cell(1, 5).value = 'Quantita'
-            sheet1.cell(1, 6).value = 'Prezzo unitario'
-            sheet1.cell(1, 7).value = 'UM'
-            sheet1.cell(1, 8).value = 'Sconto o magg'
-            sheet1.cell(1, 9).value = '%IVA'
-            sheet1.cell(1, 10).value = 'Prezzo totale'
-            sheet2.cell(1, 3).value = 'ARTICOLO'
-            sheet2.cell(1, 4).value = 'DESCRIZIONE'
-            sheet2.cell(1, 5).value = 'UNITÀ'
-            sheet2.cell(1, 6).value = 'Q.TÀ'
-            sheet2.cell(1, 7).value = 'IMPORTO U.'
-            sheet2.cell(1, 8).value = 'IVA%SCONTO'
-            sheet2.cell(1, 9).value = 'IMPORTO'
-            sheet3.cell(1, 1).value = 'Inventario'
 
         max_r1 = sheet1.max_row  # Donne l'emplacement pour écrire dans l'excel, dernière ligne remplie
 
@@ -186,12 +153,21 @@ class MaFenetre(QtWidgets.QMainWindow):
             os.chdir(rep)
             return  # stop
 
-        # On regarde si le fournisseur existe déjà
+        # On met le fournisseur si il n'existe pas
         if checkFourn(I):
             insert_fournisseur = '''INSERT INTO Fournisseurs(Nom,IVA)
                                         VALUES(?,?)'''
+            list_fournisseurs = '''SELECT * 
+                                    FROM Fournisseurs'''
             tuple = (name, I)
             cur.execute(insert_fournisseur, tuple)# on le met dans la bdd
+            cur.execute(list_fournisseurs)
+            pointeur = 1
+            for ligne in cur:
+                pointeur += 1
+                for o in range(0,len(ligne)):
+                    sheet4.cell(row=pointeur, column=2+o).value = ligne[o]
+
             conn.commit()
 
         # On ecrit les infos de la facture dans l'excel
@@ -242,6 +218,7 @@ class MaFenetre(QtWidgets.QMainWindow):
                     tuple_q = (code, IVA)
                     cur.execute(nb_objets_request, tuple_q)
                     rows = cur.fetchall()
+                    quant_init=0
                     for row in rows:
                         quant_init = row[0]
 
@@ -285,6 +262,7 @@ class MaFenetre(QtWidgets.QMainWindow):
 
     ##Fonction appelée par le bouton vendita
     def genererVente(self):
+
         path = Path("../Fatture_Vendita/" + self.__champTexte.text() + ".pdf")
         rep = os.getcwd()
         # ouvre le pdf
@@ -294,43 +272,11 @@ class MaFenetre(QtWidgets.QMainWindow):
         except FileNotFoundError:
             self.__champTexte.clear()
             self.labelMessage.setText("Questa fattura non esiste")
-            return
-        # Ouverture excel
-        # Test si l'excel existe, dans ce cas là, on l'ouvre
-        try:
-            os.chdir(os.pardir)
-            wb = openpyxl.load_workbook('Fatture.xlsx')
-            sheet1 = wb['Acquista']
-            sheet2 = wb['Vendita']
-            sheet3 = wb['Inventario']
             os.chdir(rep)
+            return
 
-        except FileNotFoundError:  # Sinon, on le crée
-            wb = Workbook()
-            sheet = wb.active
-            sheet.title = 'Acquista'
-            wb.create_sheet('Vendita')
-            wb.create_sheet('Inventario')
-            sheet1 = wb['Acquista']
-            sheet2 = wb['Vendita']
-            sheet3 = wb['Inventario']
-            sheet1.cell(1, 3).value = 'Cod Articolo'
-            sheet1.cell(1, 4).value = 'Desczione'
-            sheet1.cell(1, 5).value = 'Quantita'
-            sheet1.cell(1, 6).value = 'Prezzo unitario'
-            sheet1.cell(1, 7).value = 'UM'
-            sheet1.cell(1, 8).value = 'Sconto o magg'
-            sheet1.cell(1, 9).value = '%IVA'
-            sheet1.cell(1, 10).value = 'Prezzo totale'
-            sheet2.cell(1, 3).value = 'ARTICOLO'
-            sheet2.cell(1, 4).value = 'DESCRIZIONE'
-            sheet2.cell(1, 5).value = 'UNITÀ'
-            sheet2.cell(1, 6).value = 'Q.TÀ'
-            sheet2.cell(1, 7).value = 'IMPORTO U.'
-            sheet2.cell(1, 8).value = 'IVA%SCONTO'
-            sheet2.cell(1, 9).value = 'IMPORTO'
-            sheet3.cell(1, 3).value = 'Acquista'
-            sheet3.cell(1, 12).value = 'Vendita'
+
+
 
         max_r2 = sheet2.max_row  # Donne l'emplacement pour écrire dans l'excel
 
@@ -350,7 +296,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         # IVA
         IV = page1.extract_text().find('IVA')
         CF = page1.extract_text().find('C.F')
-        IVA = page1.extract_text()[IV + 4: CF - 1]
+        IVA = page1.extract_text()[IV + 4: CF - 3]
 
         # NUM
         Nume = page1.extract_text().find('Numero')
@@ -372,8 +318,17 @@ class MaFenetre(QtWidgets.QMainWindow):
         if checkFourn(I):
             insert_fournisseur = '''INSERT INTO Fournisseurs(Nom,IVA)
                                         VALUES(?,?)'''
+            list2_fournisseurs = '''SELECT * 
+                                    FROM Fournisseurs'''
             tuple = (name, I)
-            cur.execute(insert_fournisseur, tuple)
+            cur.execute(insert_fournisseur, tuple)  # on le met dans la bdd
+            cur.execute(list2_fournisseurs)
+            pointeur = 1
+            for ligne in cur:
+                pointeur += 1
+                for o in range(0, len(ligne)):
+                    sheet4.cell(row=pointeur, column=2 + o).value = ligne[o]
+
             conn.commit()
 
         sheet2.cell(max_r2 + 2, 1).value = name
@@ -405,35 +360,36 @@ class MaFenetre(QtWidgets.QMainWindow):
                 sheet2.cell(row=max_r2 + i + 2, column=k + 2).value = Lines[i][k]
 
 
-        # Si il n'existe pas dans la BDD, message d'avertissement puis rentre
-        if checkObjet(code,desc,IVA):
+            # Si il n'existe pas dans la BDD, message d'avertissement puis rentre
+            if checkObjet(code,desc,IVA):
 
-            self.labelWarning.setText("Si prega di notare che uno degli articoli venduti non esiste nel database")
-            insert_objet='''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
-                                    VALUES(?,?,?,?)'''
-            tuple_o=(IVA,code,desc,quant)
-            cur.execute(insert_objet, tuple_o)
-        #Sinon, on change sa quantité
-        else:
+                self.labelWarning.setText("Si prega di notare che uno degli articoli venduti non esiste nel database")
+                insert_objet='''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
+                                        VALUES(?,?,?,?)'''
+                tuple_o=(IVA,code,desc,quant)
+                cur.execute(insert_objet, tuple_o)
+            #Sinon, on change sa quantité
+            else:
 
-            nb_objets_request = '''SELECT Quantita FROM Inventaire
-                                                    WHERE Code = ? AND  IVA = ?'''
-            tuple_q = (code, IVA)
-            cur.execute(nb_objets_request, tuple_q)
-            rows = cur.fetchall()
-            for row in rows:
-                quant_init = row[0]
+                nb_objets_request = '''SELECT Quantita FROM Inventaire
+                                                        WHERE Code = ? AND  IVA = ?'''
+                tuple_q = (code, IVA)
+                cur.execute(nb_objets_request, tuple_q)
+                rows = cur.fetchall()
+                quant_init=0
+                for row in rows:
+                    quant_init = row[0]
 
-            if type(quant) == str:
-                quant = float(quant.strip().split(" ")[0].replace(',', '.'))
-            if type(quant_init) == str:
-                quant_init = float(quant_init.strip().split(" ")[0].replace(',', '.'))
+                if type(quant) == str:
+                    quant = float(quant.strip().split(" ")[0].replace(',', '.'))
+                if type(quant_init) == str:
+                    quant_init = float(quant_init.strip().split(" ")[0].replace(',', '.'))
 
-            tuple_o = (str(quant + quant_init), code, IVA)
-            update_objet = '''UPDATE Inventaire
-                                                SET Quantita = ?
-                                                WHERE Code = ? AND IVA = ?'''
-            cur.execute(update_objet, tuple_o)
+                tuple_o = (str(quant + quant_init), code, IVA)
+                update_objet = '''UPDATE Inventaire
+                                                    SET Quantita = ?
+                                                    WHERE Code = ? AND IVA = ?'''
+                cur.execute(update_objet, tuple_o)
 
         # On rentre la bdd inventaire dans la feuille 3
 
@@ -577,8 +533,19 @@ def addClient(IVA, Nom):
         tuple = (str(IVA), str(Nom))
         requestAdd = """INSERT INTO Fournisseurs(IVA,Nom)
                             VALUES(?,?)"""
+        list_fournisseurs4 = '''SELECT * 
+                                            FROM Fournisseurs'''
         cur.execute(requestAdd, tuple)
+        cur.execute(list_fournisseurs4)
+        pointeur = 1
+
+        for ligne in cur:
+            pointeur += 1
+            for o in range(0, len(ligne)):
+                sheet4.cell(row=pointeur, column=2 + o).value = ligne[o]
+
         conn.commit()
+        wb.save('Fatture.xlsx')
         return True
     else:
         return False
@@ -661,6 +628,53 @@ def checkObjet(code,desc,IVA): #todo: verifier le or/and
 
 
 ### Code principal
+
+#creation excel
+try:
+    rep = os.getcwd()
+    os.chdir(os.pardir)
+    wb = openpyxl.load_workbook('Fatture.xlsx')
+    sheet1 = wb['Acquista']
+    sheet2 = wb['Vendita']
+    sheet3 = wb['Inventario']
+    sheet4 = wb['Fornitori']
+    os.chdir(rep)
+
+except FileNotFoundError:  # Sinon, on le crée
+    wb = Workbook()
+    sheet = wb.active
+    sheet.title = 'Acquista'
+    wb.create_sheet('Vendita')
+    wb.create_sheet('Inventario')
+    wb.create_sheet('Fornitori')
+    sheet1 = wb['Acquista']
+    sheet2 = wb['Vendita']
+    sheet3 = wb['Inventario']
+    sheet4 = wb['Fornitori']
+    sheet1.cell(1, 3).value = 'Cod Articolo'
+    sheet1.cell(1, 4).value = 'Desczione'
+    sheet1.cell(1, 5).value = 'Quantita'
+    sheet1.cell(1, 6).value = 'Prezzo unitario'
+    sheet1.cell(1, 7).value = 'UM'
+    sheet1.cell(1, 8).value = 'Sconto o magg'
+    sheet1.cell(1, 9).value = '%IVA'
+    sheet1.cell(1, 10).value = 'Prezzo totale'
+    sheet2.cell(1, 3).value = 'ARTICOLO'
+    sheet2.cell(1, 4).value = 'DESCRIZIONE'
+    sheet2.cell(1, 5).value = 'UNITÀ'
+    sheet2.cell(1, 6).value = 'Q.TÀ'
+    sheet2.cell(1, 7).value = 'IMPORTO U.'
+    sheet2.cell(1, 8).value = 'IVA%SCONTO'
+    sheet2.cell(1, 9).value = 'IMPORTO'
+    sheet3.cell(1, 3).value = 'Acquista'
+    sheet3.cell(1, 12).value = 'Vendita'
+    sheet4.cell(1, 1).value = 'Fornitori'
+    sheet3.cell(1, 1).value = 'Inventario'
+    wb.save('Fatture.xlsx')
+    os.chdir(rep)
+
+
+#creation bdd
 conn = None
 rep = os.getcwd()
 os.chdir(os.pardir)

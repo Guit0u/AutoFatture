@@ -345,12 +345,19 @@ class MaFenetre(QtWidgets.QMainWindow):
         for i in range(len(Lines)):
             code = Lines[i][1]
             desc = Lines[i][2]
+            if code=='':
+                code=Lines[i][0]
+                desc=Lines[i][1]
+            if code=='.':
+                break
             tempBool = True
             temp=2
             while tempBool:
                 quant = Lines[i][temp].split(' ')
                 print(quant)
                 quant = quant[-1]
+                if(quant==''):
+                    break
                 print('bonjour')
                 print(quant)
                 try:

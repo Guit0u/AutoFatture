@@ -111,6 +111,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         # ouvre le pdf
         try:
             pdf = pdfplumber.open(path)
+            os.chdir(rep)
         # cree le pdf
         except FileNotFoundError:
             self.__champTexte.clear()
@@ -150,7 +151,6 @@ class MaFenetre(QtWidgets.QMainWindow):
             self.__champTexte.clear()
             wb.save('Fatture.xlsx')
             wb.close()
-            os.chdir(rep)
             return  # stop
 
         # On met le fournisseur si il n'existe pas
@@ -203,7 +203,7 @@ class MaFenetre(QtWidgets.QMainWindow):
 
 
                 # il n'existe pas dans la BDD, on le rentre
-                if checkObjet(code,desc,IVA):
+                if checkObjet(code,desc):
                     insert_objet = '''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
                                     VALUES(?,?,?,?)'''
                     tuple_o = (IVA,code, desc, quant)
@@ -253,12 +253,11 @@ class MaFenetre(QtWidgets.QMainWindow):
         conn.commit()
 
         # On close tout
-
         wb.save('Fatture.xlsx')
         wb.close()
         self.labelMessage.setText("La fattura è stata aggiunta")
         self.__champTexte.clear()
-        os.chdir(rep)
+
 
     ##Fonction appelée par le bouton vendita
     def genererVente(self):
@@ -268,6 +267,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         # ouvre le pdf
         try:
             pdf = pdfplumber.open(path)
+            os.chdir(rep)
         # cree le pdf
         except FileNotFoundError:
             self.__champTexte.clear()
@@ -310,7 +310,6 @@ class MaFenetre(QtWidgets.QMainWindow):
         if checkV(I, D, N):
             self.labelMessage.setText("Questa fattura è già stata registrata")
             self.__champTexte.clear()
-            os.chdir(rep)
             return
         # rentre le fournisseur
 
@@ -409,7 +408,7 @@ class MaFenetre(QtWidgets.QMainWindow):
 
 
             # Si il n'existe pas dans la BDD, message d'avertissement puis rentre
-            if checkObjet(code,desc,IVA):
+            if checkObjet(code,desc):
 
                 self.labelWarning.setText("Si prega di notare che uno degli articoli venduti non esiste nel database")
                 insert_objet='''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
@@ -462,7 +461,7 @@ class MaFenetre(QtWidgets.QMainWindow):
         wb.close()
         self.labelMessage.setText("La fattura è stata aggiunta")
         self.__champTexte.clear()
-        os.chdir(rep)
+
 
     ## fonction appelé par le bouton add client
     def AddClientBouton(self):
@@ -642,12 +641,6 @@ def addObjet(IVA,Code,Objet,Quantite):
         return True
 
 
-
-
-
-
-
-
 ## Possiblement pour supprimer un client
 def SuppClient(IVA):
     if (checkFourn(IVA)):
@@ -679,14 +672,11 @@ def checkObjet(code,desc):
 
 #creation excel
 try:
-    rep = os.getcwd()
-    os.chdir(os.pardir)
     wb = openpyxl.load_workbook('Fatture.xlsx')
     sheet1 = wb['Acquista']
     sheet2 = wb['Vendita']
     sheet3 = wb['Inventario']
     sheet4 = wb['Fornitori']
-    os.chdir(rep)
 
 except FileNotFoundError:  # Sinon, on le crée
     wb = Workbook()
@@ -719,7 +709,6 @@ except FileNotFoundError:  # Sinon, on le crée
     sheet4.cell(1, 1).value = 'Fornitori'
     sheet3.cell(1, 1).value = 'Inventario'
     wb.save('Fatture.xlsx')
-    os.chdir(rep)
 
 
 #creation bdd

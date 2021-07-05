@@ -341,23 +341,42 @@ class MaFenetre(QtWidgets.QMainWindow):
             for tables in table:
                 for line in tables:
                     if not 'ALIQUOTE' in line[1]:
-                        Lines.append(line)
+                        if not'ALIQUOTE' in line[2]:
+                            Lines.append(line)
+        print(Lines)
         for i in range(len(Lines)):
             code = Lines[i][1]
             desc = Lines[i][2]
             if code=='':
+                print("code avant")
                 code=Lines[i][0]
+                print("code après = " + str(code))
                 desc=Lines[i][1]
+            if code=='':
+                print("code avant")
+                code=Lines[i][2]
+                print("code après = " + str(code))
+                desc=Lines[i][3]
             if code=='.':
-                break
+                i+=1
+                code = Lines[i][1]
+                desc = Lines[i][2]
+                if code == '':
+                    print("code avant")
+                    code = Lines[i][0]
+                    print("code après = " + str(code))
+                    desc = Lines[i][1]
+                if code == '':
+                    print("code avant")
+                    code = Lines[i][2]
+                    print("code après = " + str(code))
+                    desc = Lines[i][3]
             tempBool = True
             temp=2
             while tempBool:
                 quant = Lines[i][temp].split(' ')
                 print(quant)
                 quant = quant[-1]
-                if(quant==''):
-                    break
                 print('bonjour')
                 print(quant)
                 try:
@@ -581,7 +600,7 @@ def addClient(IVA, Nom):
 
 ## Ajoute un objet à la main
 def addObjet(IVA,Code,Objet,Quantite):
-    if checkObjet(Code,Objet,IVA): #l'objet n'existe pas, on le rentre
+    if checkObjet(Code,Objet): #l'objet n'existe pas, on le rentre
         try:
             Quantite = float(Quantite.strip().split(" ")[0].replace(',', '.'))
 
@@ -616,8 +635,8 @@ def addObjet(IVA,Code,Objet,Quantite):
             QFinal = Quantite + QInitFloat
         check2="""UPDATE Inventaire 
                     SET Quantita = ?
-                    WHERE Code=? AND IVA=?"""
-        tuple=(QFinal,str(Code),IVA)
+                    WHERE Code=?"""
+        tuple=(QFinal,str(Code))
         cur.execute(check2, tuple)
         conn.commit()
         return True
@@ -642,10 +661,10 @@ def SuppClient(IVA):
         return True
 
 ## Est vrai si l'objet n'existe pas dans la BDD
-def checkObjet(code,desc,IVA):
-    tuple = (code,desc,IVA)
+def checkObjet(code,desc):
+    tuple = (code,desc)
     check = '''SELECT * FROM Inventaire as I
-                    WHERE (I.Code = ? OR I.Descrizione = ?) AND I.IVA = ?'''
+                    WHERE (I.Code = ? OR I.Descrizione = ?)'''
     cur.execute(check,tuple)
     b=''
     for row in cur:

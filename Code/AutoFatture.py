@@ -376,12 +376,7 @@ class MaFenetre(QtWidgets.QMainWindow):
                                 print(quant)
                                 sheet2.cell(row=max_r2 + i + 2, column=6).value = - quant
 
-                    indice = k + 1
-                    for q in range(k+1,len(Lines[i])):
 
-                        if Lines[i][q]!='' or Lines[i][q]!=' ':
-                            sheet2.cell(row=max_r2 + i + 2, column=indice + 1).value = Lines[i][q]
-                            indice+=1
 
                 
 
@@ -680,11 +675,7 @@ except FileNotFoundError:  # Sinon, on le crée
     sheet2.cell(1, 4).value = 'DESCRIZIONE'
     sheet2.cell(1, 5).value = 'UNITÀ'
     sheet2.cell(1, 6).value = 'Q.TÀ'
-    sheet2.cell(1, 7).value = 'IMPORTO U.'
-    sheet2.cell(1, 8).value = 'IVA%SCONTO'
-    sheet2.cell(1, 9).value = 'IMPORTO'
     sheet3.cell(1, 3).value = 'Acquista'
-    sheet3.cell(1, 12).value = 'Vendita'
     sheet4.cell(1, 1).value = 'Fornitori'
     sheet3.cell(1, 1).value = 'Inventario'
     wb.save('Fatture.xlsx')

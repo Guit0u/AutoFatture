@@ -347,7 +347,7 @@ class MaFenetre(QtWidgets.QMainWindow):
             sheet2.cell(row=max_r2 + i + 2, column=1+2).value = code
             #parsing selon les unités :
             for k in range(len(Lines[i])):
-                if 'N' in Lines[i][k]:
+                if 'N'in Lines[i][k]  or 'KG' in Lines[i][k]:
                     o=Lines[i][k].split(' ')
                     if len(o)==1:
                         desc=[]
@@ -361,7 +361,7 @@ class MaFenetre(QtWidgets.QMainWindow):
 
                     else:
                         for l in range(len(o)):
-                            if o[l]=='N':
+                            if o[l]=='N' or o[l]=='KG' :
                                 q=o[:l]
                                 if k>1:
                                     for _ in range(2,k):

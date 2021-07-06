@@ -358,6 +358,7 @@ class MaFenetre(QtWidgets.QMainWindow):
                         quant=Lines[i][k+1].split('\n')[0]
                         quant=- float(quant.strip().split(" ")[0].replace(',', '.'))
                         sheet2.cell(row=max_r2 + i + 2, column=6).value = - quant
+                        print(quant)
 
                     else:
                         for l in range(len(o)):
@@ -372,13 +373,13 @@ class MaFenetre(QtWidgets.QMainWindow):
                                 #desc=Lines[i][k-1]
                                 quant=o[l+1].split('\n')[0]
                                 quant=- float(quant.strip().split(" ")[0].replace(',', '.'))
+                                print(quant)
                                 sheet2.cell(row=max_r2 + i + 2, column=6).value = - quant
 
                     indice = k + 1
                     for q in range(k+1,len(Lines[i])):
 
                         if Lines[i][q]!='' or Lines[i][q]!=' ':
-                            print(Lines[i][q])
                             sheet2.cell(row=max_r2 + i + 2, column=indice + 1).value = Lines[i][q]
                             indice+=1
 

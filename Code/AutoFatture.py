@@ -203,7 +203,7 @@ class MaFenetre(QtWidgets.QMainWindow):
 
 
                 # il n'existe pas dans la BDD, on le rentre
-                if checkObjet(code,desc):
+                if checkObjet(code):
                     insert_objet = '''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
                                     VALUES(?,?,?,?)'''
                     tuple_o = (IVA,code, desc, quant)
@@ -382,7 +382,7 @@ class MaFenetre(QtWidgets.QMainWindow):
 
 
             # Si il n'existe pas dans la BDD, message d'avertissement puis rentre
-            if checkObjet(code,desc):
+            if checkObjet(code):
 
                 self.labelWarning.setText("Si prega di notare che uno degli articoli venduti non esiste nel database")
                 insert_objet='''INSERT INTO Inventaire(IVA,Code,Descrizione,Quantita)
@@ -573,7 +573,7 @@ def addClient(IVA, Nom):
 
 ## Ajoute un objet à la main
 def addObjet(IVA,Code,Objet,Quantite):
-    if checkObjet(Code,Objet): #l'objet n'existe pas, on le rentre
+    if checkObjet(Code): #l'objet n'existe pas, on le rentre
         try:
             Quantite = float(Quantite.strip().split(" ")[0].replace(',', '.'))
 
@@ -628,10 +628,10 @@ def SuppClient(IVA):
         return True
 
 ## Est vrai si l'objet n'existe pas dans la BDD
-def checkObjet(code,desc):
-    tuple = (code,desc)
+def checkObjet(code):
+    tuple = (code,)
     check = '''SELECT * FROM Inventaire as I
-                    WHERE (I.Code = ? OR I.Descrizione = ?)'''
+                    WHERE (I.Code = ?)'''
     cur.execute(check,tuple)
     b=''
     for row in cur:
